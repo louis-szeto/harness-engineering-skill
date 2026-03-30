@@ -1,54 +1,79 @@
 # Harness Engineer
 
-Transform codebases into agent-first environments where AI agents can work autonomously, correctly, and coherently.
+An OpenClaw skill that transforms Claude Code into a **self-evolving software engineering system** through persistent memory, multi-agent specialization, tool-driven execution, and a recursive improvement loop.
 
-Built on the principle: **Humans steer. Agents execute.**
+## How It Works
 
-## What It Does
-
-Harness Engineer is a skill that sets up projects for autonomous AI agent development. Instead of writing code yourself, you design the environment — structured markdowns, enforced invariants, and clear contracts — then spawn agents to do the implementation.
-
-## The Workflow
-
-1. **Analyze** the codebase (structure, domains, gaps)
-2. **Generate** harness markdowns (AGENTS.md, docs/ hierarchy)
-3. **Spawn** coding agents with sprint contracts
-4. **Monitor** results and verify quality
-5. **Garbage collect** — periodic drift checks and quality refreshes
-
-## What Gets Generated
-
-In your target project:
+The runtime executes a continuous 7-step cycle:
 
 ```
-your-project/
-├── AGENTS.md                    # Entry point (~100 lines)
-├── docs/
-│   ├── architecture.md          # Design decisions, domain structure
-│   ├── domains.md               # Dependency rules per domain
-│   ├── quality.md               # A–F quality grades with gaps
-│   ├── golden-principles.md     # Enforced code quality rules
-│   └── plans/                   # Active and completed plans
+UNDERSTAND → DOCUMENT → PLAN → BUILD → VERIFY → REFLECT → IMPROVE → LOOP
 ```
 
-## Spawning an Agent
+It never truly stops — it transitions into **maintenance**, **optimization**, or **garbage-collection** mode when active work completes.
 
-```bash
-claude --permission-mode bypassPermissions --print "Your task. When done, run: openclaw system event --text 'Done: summary' --mode now"
-```
+## Architecture
 
-Each agent reads the harness markdowns, implements its sprint contract, and loops through test → self-review → fix until all tests pass and no lint errors remain.
+### Agents (role-specialized subprocesses)
 
-## Contents
+| Agent | Role |
+|-------|------|
+| **dispatcher** | Task decomposition and agent spawning — the only agent that can create others |
+| **architect** | System design, architecture docs, ADRs |
+| **implementer** | Production code — requires specs and plans before writing |
+| **tester** | Tests (unit/integration/e2e) — enforces 90% coverage floor |
+| **reviewer** | PR enforcement and constraint checking |
+| **debugger** | Root cause analysis — never patches symptoms |
+| **optimizer** | Performance improvements (after security/correctness) |
+| **doc-writer** | All documentation using templates |
+| **garbage-collector** | Dead code removal, drift detection, entropy reduction |
 
-- `SKILL.md` — Full methodology (the main reference)
-- `references/agent-prompts.md` — Prompt templates for feature work, testing, docs, refactoring, and bug fixes
-- `references/golden-principles.md` — Catalog of enforceable quality rules (parse don't validate, structured logging, file size limits, etc.)
-- `references/quality-rubric.md` — A–F grading scale and assessment process
+### Runtime (`runtime/`)
+
+- **loop.md** — The core execution engine and cycle definition
+- **memory-system.md** — How MEMORY.md stores episodic, semantic, and procedural knowledge
+- **prioritization.md** — Task scoring formula: security > failing tests > correctness > ...
+- **autonomy-rules.md** — Behavior when blocked or uncertain
+- **self-improvement.md** — Every failure produces a constraint, test, or doc
+
+### Tools (`tools/`)
+
+- **TOOL_REGISTRY.md** — Catalog of all available tools across 9 categories
+- **tool-router.md** — Centralized routing, rate limiting, destructive-action blocking
+- **execution-protocol.md** — 5-step lifecycle: Request → Route → Execute → Validate → Log
+
+### References (`references/`)
+
+Non-negotiable constraints: harness rules, testing standards, security-performance requirements, git workflow (trunk-based), phases of operation, and self-generated constraints.
+
+### Templates (`templates/`)
+
+Scaffolds for plans, ADRs, architecture docs, test plans, quality reports, and agent manifests.
+
+## Startup Sequence
+
+1. Read `CONFIG.yaml` for runtime settings
+2. Read `runtime/loop.md` for the execution loop
+3. Read `agents/dispatcher.md` for task decomposition rules
+4. Read `tools/TOOL_REGISTRY.md` for available tools
+5. Load `MEMORY.md` to restore context from prior cycles
+6. Begin the loop
+
+## Configuration
+
+All settings live in `CONFIG.yaml`:
+
+- **runtime**: loop mode (continuous/single-pass/maintenance), parallelism, retry limits
+- **priorities**: fixed order — security, correctness, reliability, performance, memory, maintainability, cost
+- **testing**: 90% coverage minimum, unit + integration + e2e required
+- **git**: trunk-based, PR required, auto-merge on green, 2-day branch lifetime
+- **memory**: persistent, unlimited history, pattern detection after 2 failures
+- **self_improvement**: enabled — failures generate rules, tests, or docs
 
 ## Core Rules
 
-- **Dependency direction** within any domain: `Types → Config → Repo → Service → Runtime → UI` — never backwards
-- **Convergence criteria**: all tests pass + zero lint errors + golden principles compliant + acceptance criteria met
-- **Parse at boundaries**: validate data shapes at entry points, trust typed data internally
-- **Plans are artifacts**: versioned, co-located, tracked alongside code
+1. **Everything must be in-repo** — if it's not in `docs/`, it doesn't exist
+2. **No implementation without** a spec, a plan, and validation criteria
+3. **Failure = harness gap** — fix the system cause, not just the output
+4. **Always** test → validate → document → score
+5. **Optimization priority** (strict): security → correctness → reliability → performance → memory → maintainability → cost

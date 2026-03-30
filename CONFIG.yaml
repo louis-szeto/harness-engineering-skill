@@ -1,0 +1,42 @@
+runtime:
+  max_parallel_agents: 8
+  loop_mode: continuous          # options: continuous | single-pass | maintenance
+  retry_limit: 5
+  gc_interval: every_10_cycles
+
+priorities:
+  security: critical
+  correctness: critical
+  reliability: high
+  performance: high
+  memory_efficiency: medium
+  maintainability: medium
+  cost: low
+
+testing:
+  unit: required                 # must pass before merge
+  integration: required
+  e2e: required
+  fuzz: recommended
+  coverage_minimum: 90           # percent
+
+git:
+  strategy: trunk-based
+  pr_required: true
+  auto_merge_on_green: true
+  branch_max_lifetime: 2d
+
+memory:
+  persistence: true
+  max_history: unlimited
+  pattern_threshold: 2           # failures before creating prevention rule
+
+self_improvement:
+  enabled: true
+  on_failure: generate_rule_or_test_or_doc
+
+tools:
+  max_retries: 3
+  log_all_calls: true
+  output_dir: docs/generated/tool-logs/
+  block_destructive_without_approval: true

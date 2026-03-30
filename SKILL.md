@@ -1,305 +1,86 @@
 ---
 name: harness-engineer
-description: 'Apply harness engineering principles to transform a codebase into an agent-first development environment. Use when the user asks to: (1) set up harness engineering for a project, (2) rewrite/regenerate project markdowns into harness engineering format, (3) spawn Claude Code agents to implement features following harness patterns, (4) audit a codebase for harness readiness, (5) create structured knowledge bases (AGENTS.md, docs/ hierarchy) for AI agent consumption. Core workflow: read codebase → generate structured markdowns → spawn coding agents with clear contracts → agents recursively search, implement, test, self-review until perfect.'
+description: >
+  A persistent autonomous engineering harness runtime that transforms any repository into a
+  self-improving software system. Use this skill whenever the user wants to: build or run an
+  autonomous coding agent, set up a self-healing engineering loop, orchestrate multi-agent
+  software development, implement harness engineering principles, create a doc-driven
+  development workflow, or run long-horizon autonomous software tasks. Trigger on phrases like
+  "autonomous agent", "self-healing codebase", "harness engineering", "multi-agent pipeline",
+  "continuous improvement loop", "OpenClaw skill", or any request for an agentic engineering
+  system that runs without constant human input.
 ---
 
-# Harness Engineer
+# HARNESS AUTONOMOUS RUNTIME
 
-Transform codebases into agent-first environments where Claude Code agents can work autonomously, correctly, and coherently.
+A complete skill package for turning Claude Code into a **self-evolving software engineering
+system**. It combines persistent memory, multi-agent specialization, tool-driven execution, and
+a recursive improvement loop.
 
-## Core Philosophy
+---
 
-From OpenAI's harness engineering: **"Humans steer. Agents execute."** The primary job is designing environments, specifying intent, and building feedback loops—not writing code.
+## NON-NEGOTIABLE RULES
 
-**Key principles:**
-- Give agents a **map**, not a 1,000-page manual
-- Enforce **invariants**, not implementations
-- **Parse at boundaries** (validate data shapes at entry points)
-- Treat plans as **first-class artifacts** (versioned, co-located)
-- Encode "golden principles" and run periodic **garbage collection**
+1. **EVERYTHING MUST BE IN-REPO** — if it is not in `docs/`, it does not exist.
+2. **NO IMPLEMENTATION WITHOUT** a spec, a plan, and validation criteria.
+3. **FAILURE = HARNESS GAP** — never patch output alone; fix the system cause.
+4. **ALWAYS** test → validate → document → score.
+5. **OPTIMIZATION PRIORITY (STRICT ORDER):**
+   1. Security
+   2. Correctness
+   3. Reliability
+   4. Performance
+   5. Memory efficiency
+   6. Maintainability
+   7. Cost
 
-## Workflow
+---
 
-### Phase 1: Analyze Codebase
+## EXECUTION MODEL
 
-Before writing anything, understand the project:
-
-1. Read the existing project structure (`find`, `tree`, `ls -la`)
-2. Read existing markdown files (README, CLAUDE.md, AGENTS.md, any docs/)
-3. Identify: languages, frameworks, test infrastructure, CI config, package managers
-4. Map the architectural domains and dependency directions
-5. Identify gaps: missing docs, missing tests, missing constraints
-
-**Output:** A mental (or written) map of domains, layers, and boundaries.
-
-### Phase 2: Generate Harness Markdowns
-
-Rewrite or create the following files in harness engineering format:
-
-#### 2.1 AGENTS.md (Root — ~100 lines, table of contents style)
-
-```markdown
-# AGENTS.md
-
-## Project Overview
-One paragraph: what this is, tech stack, how to build/test/run.
-
-## Quick Start
-```bash
-# Install, build, test, run — the minimal commands
-```
-
-## Architecture Map
-Pointer to `docs/architecture.md`. Domain → layer → package mapping.
-
-## Domain Guide
-Pointer to `docs/domains.md`. What lives where, dependency rules.
-
-## Codebase Conventions
-- Language-specific style rules
-- Naming conventions
-- File organization patterns
-
-## Quality & Invariants
-- What custom linters enforce
-- Structural test requirements
-- Boundary validation rules ("parse, don't validate")
-
-## Knowledge Base
-- `docs/architecture.md` — system of record for design decisions
-- `docs/domains.md` — domain boundaries and dependency rules
-- `docs/quality.md` — quality grades per domain, tracked gaps
-- `docs/golden-principles.md` — encoded human taste, enforced by linters
-- `docs/plans/` — active plans, completed plans, known tech debt
-
-## How to Work Here
-1. Read this file first
-2. Read `docs/architecture.md` for context
-3. Check `docs/plans/` for any active execution plan
-4. Follow the invariant rules below
-5. Write tests before or alongside code
-6. Run tests and fix failures before opening PRs
-```
-
-#### 2.2 docs/architecture.md
-
-```markdown
-# Architecture
-
-## Domains & Layers
-| Domain | Layers (dependency direction →) |
-|--------|-------------------------------|
-| Auth | Types → Config → Repo → Service → Runtime → UI |
-| ... | ... |
-
-## Cross-Cutting Concerns
-Auth, telemetry, connectors, feature flags — enter through explicit Provider interfaces.
-
-## Design Decisions
-Numbered ADRs: what, why, alternatives considered, date.
-
-## Tech Stack & Rationale
-Why each technology was chosen (agents reason better with "why").
-```
-
-#### 2.3 docs/domains.md
-
-```markdown
-# Domains
-
-## Dependency Rules
-- Within each domain, code flows forward through layers only
-- Cross-domain dependencies go through explicit interfaces
-- No circular dependencies (enforced by linter)
-
-## Domain Map
-### {Domain Name}
-- Purpose: ...
-- Packages: ...
-- Depends on: ...
-- Tests location: ...
-```
-
-#### 2.4 docs/quality.md
-
-```markdown
-# Quality Grades
-
-## Grade Scale: A (production-ready) → F (no tests, no docs)
-
-| Domain | Tests | Docs | Linting | Grade | Notes |
-|--------|-------|------|---------|-------|-------|
-| Auth | 95% | ✅ | ✅ | A | |
-| ... | ... | ... | ... | ... | |
-
-## Known Gaps
-- [ ] Domain X needs integration tests
-- [ ] Module Y has no boundary validation
-
-Updated: YYYY-MM-DD
-```
-
-#### 2.5 docs/golden-principles.md
-
-```markdown
-# Golden Principles
-
-Encoded human taste. Enforced by linters and periodic cleanup agents.
-
-1. **Prefer shared utility packages** over hand-rolled helpers
-2. **Parse, don't validate** — validate data shapes at boundaries
-3. **No YOLO data access** — use typed SDKs, never guess shapes
-4. **Structured logging only** — no print statements, no f-strings in logs
-5. **File size limits** — files over N lines trigger refactoring
-6. **Schema naming convention** — {entity}_{use}.ts/jo/py
-```
-
-#### 2.6 docs/plans/ (directory)
-
-Active plans, completed plans, tech debt — all versioned.
-
-Each plan:
-```markdown
-# Plan: {title}
-
-## Status: active | completed | tech-debt
-## Created: YYYY-MM-DD
-## Updated: YYYY-MM-DD
-
-## Objective
-...
-
-## Acceptance Criteria
-- [ ] ...
-
-## Progress Log
-- YYYY-MM-DD: Started sprint 1, completed X
-- YYYY-MM-DD: Hit issue with Y, pivoted to Z
-```
-
-### Phase 3: Spawn Coding Agents
-
-After generating the harness markdowns, spawn Claude Code agents to do the actual work.
-
-#### Agent Assignment Strategy
-
-1. **Decompose** the task into independent work units (one per domain, module, or feature)
-2. **Write a sprint contract** for each agent: what to build, acceptance criteria, how to verify
-3. **Spawn agents** — one per work unit, each in its own worktree or directory
-
-See [references/agent-prompts.md](references/agent-prompts.md) for detailed prompt templates.
-
-#### Spawning Commands
-
-```bash
-# Claude Code — single task
-claude --permission-mode bypassPermissions --print "Your task. When done, run: openclaw system event --text 'Done: summary' --mode now"
-
-# Background for long tasks
-claude --permission-mode bypassPermissions --print "Your task..." &
-# Or via exec tool with background:true
-```
-
-```bash
-# Codex — single task (needs PTY)
-codex exec --full-auto "Your task"
-
-# Background
-codex exec --full-auto "Your task. When done, run: openclaw system event --text 'Done: summary' --mode now" &
-```
-
-#### The Recursive Loop (Per Agent)
-
-Each spawned agent follows this cycle until convergence:
+The system runs a continuous loop:
 
 ```
-┌─────────────────────────────────────────────┐
-│ 1. READ sprint contract + harness markdowns  │
-│ 2. WEB SEARCH for best practices & standards  │
-│ 3. IMPLEMENT code following patterns          │
-│ 4. WRITE comprehensive tests                  │
-│ 5. RUN tests                                 │
-│ 6. READ test logs + failures                 │
-│ 7. SELF-ANALYZE: what went wrong, why        │
-│ 8. REVIEW own code against golden principles  │
-│ 9. FIX issues found in step 7-8              │
-│ 10. GOTO step 5 until all tests pass         │
-│ 11. REPORT completion + quality metrics       │
-└─────────────────────────────────────────────┘
+UNDERSTAND → DOCUMENT → PLAN → BUILD → VERIFY → REFLECT → IMPROVE → LOOP
 ```
 
-**Convergence criteria:** All tests pass + no lint errors + code follows golden principles + sprint contract acceptance criteria met.
+The system never truly stops — it transitions into **maintenance**, **optimization**, or
+**garbage-collection** mode.
 
-#### Agent Prompt Template
+---
 
-Include in each agent's task:
+## HOW TO USE THIS SKILL
 
-```
-You are working on {project} as part of a harness engineering workflow.
+When activated, Claude should:
 
-## Your Sprint Contract
-{specific task, acceptance criteria, verification steps}
+1. **Read `CONFIG.yaml`** to load runtime settings.
+2. **Read `runtime/loop.md`** to understand the execution loop.
+3. **Read `agents/dispatcher.md`** to understand how to decompose tasks.
+4. **Read `tools/TOOL_REGISTRY.md`** to understand available tool calls.
+5. **Load `MEMORY.md`** to restore context from prior cycles.
 
-## Instructions
-1. Read AGENTS.md and docs/architecture.md for context
-2. Web search for best practices for {specific technology/pattern}
-3. Implement the required changes
-4. Write comprehensive tests (unit + integration where applicable)
-5. Run the tests. If any fail:
-   a. Read the test output carefully
-   b. Analyze the root cause
-   c. Fix the code or the test (whichever is wrong)
-   d. Re-run until all pass
-6. Self-review your code against the golden principles in docs/golden-principles.md
-7. If you find violations, fix them and re-run tests
-8. Repeat steps 5-7 until everything is clean
-9. Commit with a descriptive message
-10. When completely finished, run: openclaw system event --text "Done: {brief summary}" --mode now
-```
+Then begin the loop. Use the reference files below as needed during execution.
 
-### Phase 4: Monitor & Collect Results
+---
 
-After spawning agents:
+## REFERENCE FILES
 
-1. Track sessions via `process action:list` or `subagents action:list`
-2. Check logs periodically: `process action:log sessionId:XXX`
-3. When an agent finishes, verify:
-   - Tests pass
-   - No lint errors
-   - Code follows harness conventions
-4. If quality is insufficient, respawn with additional guidance
-
-### Phase 5: Garbage Collection (Periodic)
-
-After agent work completes, run cleanup:
-
-1. Check for drift from golden principles
-2. Verify documentation matches code reality
-3. Update quality grades in `docs/quality.md`
-4. Flag new tech debt in `docs/plans/`
-5. Run linters across the full codebase
-
-## File Structure Summary
-
-```
-{project-root}/
-├── AGENTS.md                    # Entry point (~100 lines)
-├── docs/
-│   ├── architecture.md          # System of record for design
-│   ├── domains.md               # Domain boundaries & deps
-│   ├── quality.md               # Quality grades & gaps
-│   ├── golden-principles.md     # Enforced human taste
-│   └── plans/                   # Active + completed plans
-│       ├── active-plan.md
-│       └── completed/
-├── src/                         # Source code (agent-generated)
-├── tests/                       # Tests (agent-generated)
-└── .github/
-    └── workflows/               # CI (agent-generated)
-```
-
-## References
-
-- [Agent prompt templates](references/agent-prompts.md) — detailed prompts for different task types
-- [Golden principles catalog](references/golden-principles.md) — common principles to enforce
-- [Quality grading rubric](references/quality-rubric.md) — how to grade domain quality
+| File | When to read |
+|------|-------------|
+| `CONFIG.yaml` | At startup — sets all runtime parameters |
+| `MEMORY.md` | At startup and after every failure |
+| `runtime/loop.md` | To execute each loop cycle |
+| `runtime/memory-system.md` | When writing or querying memory |
+| `runtime/self-improvement.md` | After any failure |
+| `runtime/prioritization.md` | When selecting the next task |
+| `runtime/autonomy-rules.md` | When blocked or uncertain |
+| `agents/dispatcher.md` | When decomposing a task into sub-agents |
+| `agents/*.md` | Load the specific agent file when spawning that agent |
+| `tools/TOOL_REGISTRY.md` | Before any tool call |
+| `tools/tool-router.md` | To validate and route tool requests |
+| `tools/execution-protocol.md` | For the full tool call lifecycle |
+| `references/harness-rules.md` | For core harness engineering constraints |
+| `references/testing-standards.md` | Before writing or running tests |
+| `references/security-performance.md` | Before any implementation |
+| `references/git-workflow.md` | Before any commit or PR |
+| `templates/` | When creating plans, ADRs, or agent manifests |
