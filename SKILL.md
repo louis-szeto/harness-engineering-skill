@@ -49,6 +49,41 @@ The system never truly stops — it transitions into **maintenance**, **optimiza
 
 ---
 
+## ⚠️ SAFE START GUIDE
+
+This harness is powerful. It will read and write repo files, run tests, create commits and
+PRs, and iterate continuously if configured to do so. Follow these steps before trusting it
+on a real repository.
+
+### Step 1 — Sandbox first
+Run on a throwaway branch or a cloned repo. Observe one full `single-pass` cycle before
+enabling `continuous` mode.
+
+### Step 2 — Review CONFIG.yaml before every run
+| Setting | Value | Notes |
+|---------|-------|-------|
+| `loop_mode` | `single-pass` | Change to `continuous` only after sandbox validation |
+| `max_parallel_agents` | `3` | Increase to 8 only when comfortable with behavior |
+| `block_destructive_without_approval` | `true` | **Never change this** |
+
+**Auto-merge has been removed.** PRs are always human-approved. This is not configurable.
+
+### Step 3 — Restrict branch permissions in your git host
+The harness will only push to branches. Protect `main`/`trunk` with required human
+reviewers — the harness creates PRs, humans merge them.
+
+### Step 4 — Audit tool implementations
+The TOOL_REGISTRY describes tool contracts. The actual implementations are provided by your
+platform (Claude Code tools, CI scripts, etc.). Verify that `git_create_pr` and
+`scan_vulnerabilities` are wired to real, scoped implementations before running.
+
+### Step 5 — Graduate modes in order
+```
+single-pass → maintenance → continuous
+```
+
+---
+
 ## HOW TO USE THIS SKILL
 
 When activated, Claude should:

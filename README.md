@@ -65,8 +65,8 @@ All settings live in `CONFIG.yaml`:
 
 - **runtime**: loop mode (continuous/single-pass/maintenance), parallelism, retry limits
 - **priorities**: fixed order — security, correctness, reliability, performance, memory, maintainability, cost
-- **testing**: 90% coverage minimum, unit + integration + e2e required
-- **git**: trunk-based, PR required, auto-merge on green, 2-day branch lifetime
+- **testing**: 95% coverage minimum, unit + integration + e2e required
+- **git**: trunk-based, PR required, 2-day branch lifetime
 - **memory**: persistent, unlimited history, pattern detection after 2 failures
 - **self_improvement**: enabled — failures generate rules, tests, or docs
 

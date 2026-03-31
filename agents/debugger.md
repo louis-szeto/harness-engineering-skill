@@ -7,7 +7,9 @@ Investigate failures. Identify root causes. Never patch symptoms.
 - `collect_logs()` — always start here
 - `git_diff()` — compare to last known-good state
 - `run_unit_tests()` — isolate the failure scope
-- `web_search()` — for unknown error patterns; store findings in `docs/references/`
+- `web_search()` — for unknown error patterns; stage findings in
+  `docs/generated/search-staging/` for human review. Do not write to `docs/references/`
+  directly — a human must promote staged findings.
 - `performance_profile()` — if the failure is performance-related
 
 ## PROCESS

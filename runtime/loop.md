@@ -54,3 +54,16 @@ Continue unless:
 - A human explicitly halts execution.
 
 **The system does not stop. It transitions.**
+
+---
+
+## SINGLE-PASS MODE BEHAVIOR
+When `CONFIG.yaml → runtime.loop_mode` is `single-pass`:
+1. Complete exactly one full cycle (UNDERSTAND through IMPROVE).
+2. Produce a quality report (`templates/quality.md`) summarizing what was done.
+3. **Stop and surface a summary to the human** — list every file changed, every PR created,
+   every test result, and any failures logged to MEMORY.md.
+4. Wait for explicit human approval before running another cycle.
+
+This is the recommended starting mode. Switch to `continuous` only after reviewing the
+output of several `single-pass` cycles.

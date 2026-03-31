@@ -1,13 +1,20 @@
+## ─────────────────────────────────────────────────────
+## SAFE START DEFAULTS
+## Read the SAFE START section of SKILL.md before
+## changing loop_mode or max_parallel_agents.
+## ─────────────────────────────────────────────────────
+
 runtime:
-  max_parallel_agents: 8
-  loop_mode: continuous          # options: continuous | single-pass | maintenance
+  max_parallel_agents: 5         # increase to 8 only after sandbox validation
+  loop_mode: single-pass         # SAFE DEFAULT — change to "continuous" only when ready
+                                 # options: continuous | single-pass | maintenance
   retry_limit: 5
-  gc_interval: every_10_cycles
+  gc_interval: every_5_cycles
 
 priorities:
   security: critical
   correctness: critical
-  reliability: high
+  reliability: critical
   performance: high
   memory_efficiency: medium
   maintainability: medium
@@ -18,12 +25,12 @@ testing:
   integration: required
   e2e: required
   fuzz: recommended
-  coverage_minimum: 90           # percent
+  coverage_minimum: 95           # percent
 
 git:
   strategy: trunk-based
   pr_required: true
-  auto_merge_on_green: true
+  # PRs always require human approval before merging. There is no auto-merge.
   branch_max_lifetime: 2d
 
 memory:
@@ -39,4 +46,4 @@ tools:
   max_retries: 3
   log_all_calls: true
   output_dir: docs/generated/tool-logs/
-  block_destructive_without_approval: true
+  block_destructive_without_approval: true  # NEVER set to false

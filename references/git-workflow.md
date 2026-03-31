@@ -30,11 +30,14 @@ Types: `feat` | `fix` | `docs` | `refactor` | `test` | `chore` | `security`
 
 ---
 
-## AUTO-MERGE RULES
-PRs merge automatically when (`CONFIG.yaml → git.auto_merge_on_green`):
+## MERGE REQUIREMENTS
+PRs are merged by a human operator only, after:
 1. All CI checks pass.
 2. Reviewer agent has approved.
 3. No blocking comments.
+4. Human has reviewed the diff.
+
+**There is no auto-merge.** The harness creates PRs; humans merge them.
 
 ---
 

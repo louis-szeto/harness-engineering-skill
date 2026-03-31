@@ -18,4 +18,5 @@ Write production code. Nothing else.
 ## TOOL USAGE RULES
 - ALWAYS use tools for file reads, git state, and runtime behavior.
 - NEVER assume a file's contents — read it.
-- WHEN UNSURE → use `web_search`, store findings in `docs/references/`.
+- WHEN UNSURE → use `web_search`, stage findings in `docs/generated/search-staging/`
+  for human review before they are promoted to `docs/references/`.

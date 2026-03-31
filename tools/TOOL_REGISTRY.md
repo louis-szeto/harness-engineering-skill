@@ -5,8 +5,20 @@ Agents NEVER call tools directly — they submit a Tool Request.
 
 ---
 
-## RULES
-- Tools must be deterministic where possible.
+## BLOCKED TOOLS (not available to agents)
+
+The following capabilities are intentionally absent from this registry. Agents must not
+attempt to invoke them or construct equivalent behavior from other tools.
+
+| Capability | Reason blocked |
+|------------|---------------|
+| `call_api(endpoint, ...)` | Unconstrained outbound network access — arbitrary host/port |
+| `start_server()` / `stop_server()` | Server lifecycle management is out of harness scope |
+| Any system hardware query | CPU model, VM identifiers, OS internals — not application concerns |
+| Shell exec / eval / subprocess | Direct code execution bypasses the tool router entirely |
+| Read/write to harness files | See PROTECTED PATHS in `tools/tool-router.md` |
+| Raw log/response body in memory | Logs contain only metadata — never raw payloads |
+| Direct write to `docs/references/` from web_search | Stage in `docs/generated/search-staging/`; human promotes |
 - All tool outputs must be machine-readable (JSON preferred).
 - Every tool call must be logged to `docs/generated/tool-logs/`.
 - NEVER trust tool output blindly — always validate.
@@ -54,13 +66,6 @@ Agents NEVER call tools directly — they submit a Tool Request.
 | Code search | `code_search(query)` | Cross-repo symbol search |
 | Dependency lookup | `dependency_lookup(package)` | Versions, vulnerabilities |
 
-### RUNTIME
-| Tool | Signature | Notes |
-|------|-----------|-------|
-| Start server | `start_server()` | |
-| Stop server | `stop_server()` | |
-| Call API | `call_api(endpoint, method, body)` | |
-
 ### SECURITY
 | Tool | Signature | Notes |
 |------|-----------|-------|
@@ -70,5 +75,5 @@ Agents NEVER call tools directly — they submit a Tool Request.
 ### METRICS
 | Tool | Signature | Notes |
 |------|-----------|-------|
-| Collect logs | `collect_logs()` | Aggregates runtime logs |
-| Performance profile | `performance_profile()` | CPU, memory, latency |
+| Collect logs | `collect_logs()` | Aggregates application runtime logs only |
+| Performance profile | `performance_profile()` | **Application-level only**: request latency, throughput, heap usage. Must NOT query system hardware, CPU model, VM identifiers, or host OS internals. |

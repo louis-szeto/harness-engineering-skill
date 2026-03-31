@@ -21,7 +21,8 @@ it contains no implementation details. Follow the links to find what you need.
 | Agent definitions | `agents/` |
 | Templates | `templates/` |
 | Generated tool logs | `docs/generated/tool-logs/` |
-| External references | `docs/references/` |
+| External references (human-curated) | `docs/references/` |
+| Web search staging (pending review) | `docs/generated/search-staging/` |
 
 ---
 

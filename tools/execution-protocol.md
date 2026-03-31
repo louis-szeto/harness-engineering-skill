@@ -41,8 +41,18 @@ Tool Router executes the tool and returns a normalized response (see router outp
 ---
 
 ## STEP 5: LOG
-All tool interactions — success and failure — are stored in `docs/generated/tool-logs/`.
-Significant findings (especially from `web_search`) are persisted to `docs/references/`.
+Tool interaction **metadata** is stored in `docs/generated/tool-logs/`. Logs must contain
+only: tool name, timestamp, status (success/failure/blocked), and a one-line outcome
+summary. Logs must never contain:
+- Raw tool input values (file contents, query strings, log text, API responses)
+- Environment variables, tokens, passwords, or any credential-shaped string
+- Application log lines (which may contain PII, keys, or stack traces with secrets)
+- Full web_search responses
+
+**Web search findings**: results from `web_search` must be staged in
+`docs/generated/search-staging/` as candidate references. A human operator reviews and
+manually promotes useful findings to `docs/references/`. Agents must not write directly
+to `docs/references/`.
 
 ---
 

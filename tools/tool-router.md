@@ -35,13 +35,42 @@ Agent → Tool Request → Tool Router → Validate → Execute → Normalize Ou
 {
   "status": "success | failure | blocked",
   "tool": "<tool name>",
-  "input": { "<key>": "<value>" },
-  "data": "<result payload>",
-  "errors": "<error message or null>",
   "timestamp": "<ISO 8601>",
+  "outcome": "<one-line summary — no raw data, no file contents>",
+  "errors": "<error type and code — not full stack trace or log lines>",
   "log_path": "docs/generated/tool-logs/<id>.json"
 }
 ```
+
+**Redaction rule**: before any tool result is written to a log or returned to an agent,
+the router must strip or mask:
+- Any value matching: `*key*`, `*token*`, `*password*`, `*secret*`, `*credential*`,
+  `Bearer *`, `-----BEGIN *`, and strings > 64 chars that appear base64-encoded
+- Full file contents (log the path, not the content)
+- Raw HTTP response bodies (log status code and outcome only)
+
+---
+
+## PROTECTED PATHS (read-only to all agents)
+
+The following files define how the harness operates. Agents may **read** them but must
+**never write, overwrite, or delete** them. Only a human operator may change these files.
+
+```
+SKILL.md
+CONFIG.yaml
+agents/**
+runtime/**
+tools/**
+references/harness-rules.md
+```
+
+Writes to any protected path must be **blocked** by the router and logged as a
+`BLOCKED_WRITE` event. If an agent submits a write request to a protected path,
+the dispatcher must be notified and the cycle must pause for human review.
+
+The one writable reference file is `references/constraints.md` — agents may **append**
+Prevention Rules to it but may **never delete or overwrite** existing constraints.
 
 ---
 

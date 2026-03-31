@@ -26,14 +26,20 @@ Every entry must use this exact structure:
 ---
 [TYPE: EPISODIC | SEMANTIC | PROCEDURAL]
 Timestamp: YYYY-MM-DD HH:MM
-Context:   <what was being attempted>
+Context:   <what was being attempted — describe the task, not the data>
 Failure:   <what went wrong, or "n/a" for procedural wins>
 Root Cause: <why it happened>
 Fix:       <what was done>
 Prevention Rule: <constraint or test added to prevent recurrence>
-Tools Used: <list of tools involved>
+Tools Used: <list of tool names only — no inputs, outputs, or payloads>
 ---
 ```
+
+**Never record in any MEMORY.md entry:**
+- File contents, log output, or API response bodies
+- Credential-shaped strings (tokens, keys, passwords, base64 blobs > 64 chars)
+- PII or user-identifiable data
+- Full stack traces (record the exception type and location only)
 
 ---
 

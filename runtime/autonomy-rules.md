@@ -44,3 +44,4 @@ Pause and surface to the human only when:
 - Retry limit is hit on a critical-path task.
 - A security vulnerability is found that requires architectural change.
 - Conflicting constraints cannot be resolved automatically.
+- `loop_mode` is `single-pass` — always pause after one complete cycle.

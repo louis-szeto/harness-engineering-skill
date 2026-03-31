@@ -17,17 +17,23 @@ Prepend — newest entries first.
 ---
 
 ## TOOL-AWARE MEMORY
-Every tool interaction that produces a non-trivial result must be recorded:
+Significant tool interactions may be summarized in MEMORY.md for pattern detection.
 
+**What to record:**
 ```
 Tool:    <tool name>
-Input:   <what was passed>
-Output:  <what was returned (summary)>
-Result:  success | failure
-Lesson:  <what this taught the system>
+Result:  success | failure | blocked
+Lesson:  <one-sentence takeaway about system behavior>
 ```
 
-Store tool interaction records in `docs/generated/tool-logs/`.
+**What to NEVER record in MEMORY.md or tool-logs:**
+- Raw tool input values (file paths are fine; file *contents* are not)
+- Application log output (may contain secrets, tokens, PII, stack traces)
+- Web search query responses (stage in `docs/generated/search-staging/` instead)
+- Any string matching patterns: `*key*`, `*token*`, `*password*`, `*secret*`,
+  `*credential*`, `Bearer *`, `-----BEGIN *`
+
+When in doubt, record the outcome and lesson only — not the data that triggered it.
 
 ---
 
