@@ -1,69 +1,128 @@
 # AUTONOMOUS LOOP
 
-This is the core execution engine. Run this loop continuously. Each full pass is one **cycle**.
+Each full pass is one cycle. The loop runs phases sequentially.
+Context budget is monitored at every phase boundary.
 
 ---
 
-## STEP 1: UNDERSTAND
-- Scan the repo with `list_dir` and `read_file`.
-- Update or create the architecture map (`docs/architecture/`).
-- Reload `MEMORY.md` to restore context.
-- Identify current system state: healthy / degraded / unknown.
+## PHASE 0: SESSION INIT (every session start)
 
-## STEP 2: DOCUMENT
-- Verify docs completeness (`list_dir docs/`).
-- Identify any code that lacks a corresponding spec or plan.
-- Dispatch `doc_writer_agent` to fill gaps before proceeding.
+1. Read CLAUDE.md / AGENTS.md (base knowledge)
+2. Read docs/status/PROGRESS.md (is this a resumption?)
+3. Read docs/status/HANDOFF.md (load checkpoint if resuming)
+4. Read MEMORY.md (failure patterns)
+5. Read references/constraints.md (apply prevention rules)
+6. Check context: if already above 20% from init reads, compact now
 
-## STEP 3: PLAN
-- Create `docs/exec-plans/PLAN-NNN.md` using `templates/plan.md`.
-- Break work into atomic tasks — each task must be completable by a single agent.
-- Score every task using `runtime/prioritization.md`.
-- Select the highest-scoring tasks for this cycle.
+LIFESPAN HOOK: on-start
+  Surface to human: "Resuming cycle NNN from checkpoint T-NNN" or "Starting new cycle"
+  Wait for human acknowledgment before proceeding.
 
-## STEP 4: BUILD
-- Dispatch agents via `agents/dispatcher.md`.
-- Implement in parallel where dependencies allow.
-- All implementations reference their PLAN-NNN.md.
+---
 
-## STEP 5: VERIFY (TOOL-DRIVEN)
-1. Run tests: `run_unit_tests()` → `run_integration_tests()` → `run_e2e_tests()`
-2. Collect logs: `collect_logs()`
-3. Security scan: `scan_vulnerabilities()` + `dependency_audit()`
-4. Performance profile: `performance_profile()`
+## PHASE 1: UNDERSTAND
 
-**IF ANY STEP FAILS:**
-→ dispatch `debugger_agent`
-→ write MEMORY.md entry
-→ re-loop from STEP 5 (do not proceed to STEP 6 until clean)
+- Scan repo with list_dir and read_file (codebase is truth)
+- Update or verify architecture map in docs/architecture/
+- Identify current system state: healthy / degraded / unknown
+- Context check: if above 40%, compact before Phase 2
 
-## STEP 6: REFLECT
-- Analyze all failures from this cycle.
-- Write MEMORY.md entries for every failure (EPISODIC type).
-- Identify patterns (2+ same failure = Prevention Rule).
+---
 
-## STEP 7: IMPROVE
-- Apply self-improvement rules from `runtime/self-improvement.md`.
-- Update `references/constraints.md` with new Prevention Rules.
-- Update `references/harness-rules.md` if a new enforcement rule is needed.
-- Dispatch `garbage_collector_agent` if `gc_interval` has elapsed.
+## PHASE 2: DOCUMENT
+
+- Verify docs completeness
+- Identify code that lacks a spec or plan
+- Dispatch doc_writer_agent for gaps before proceeding
+- Context check: if above 40%, sub-agent the scan
+
+---
+
+## PHASE 3: PLAN
+
+- Dispatch researcher sub-agent (Phase 1 of 3-phase model)
+  - Input: task description and relevant file list
+  - Output: research summary (docs/status/RESEARCH-NNN.md)
+  - researcher uses read-only tools only
+
+- Dispatch planner sub-agent (Phase 2 of 3-phase model)
+  - Input: research summary
+  - Output: PLAN-NNN.md with exact steps, filenames, line numbers, test steps
+
+HUMAN GATE (P6): Surface plan to human for approval.
+  Do not proceed to Phase 4 without explicit human approval.
+  Record approval in PLAN-NNN.md with timestamp.
+
+---
+
+## PHASE 4: BUILD
+
+- Dispatch implementer sub-agent (Phase 3 of 3-phase model)
+  - Input: approved plan
+  - Context limit: 40% per implementer instance
+  - Creates CHECKLIST-NNN.md before writing any code
+  - Commits a checkpoint after every atomic task (T-NNN)
+  - Updates PROGRESS.md after each checkpoint
+
+- If implementer hits 40% context mid-task:
+  - Write HANDOFF.md
+  - Spawn a fresh implementer with HANDOFF + relevant files only
+  - Continue from "Next step"
+
+---
+
+## PHASE 5: VERIFY (tool-driven, deterministic first)
+
+1. Run pre-commit hooks (linter, formatter) -- must pass before tests
+2. run_unit_tests() => run_integration_tests() => run_e2e_tests()
+3. collect_logs() for any failure
+4. scan_vulnerabilities() + dependency_audit()
+5. performance_profile() (application-level only)
+6. Run 3-layer recursive review cycle (agents/reviewer.md)
+
+Categorize all output per runtime/observability.md (Tier 1-4).
+
+IF Tier 1 failure:
+  Stop. Dispatch debugger_agent. Write MEMORY.md entry.
+  Identify harness gap (see runtime/observability.md).
+  Do NOT advance to Phase 6 until clean.
+
+---
+
+## PHASE 6: REFLECT
+
+- Write CYCLE-NNN.md summary (docs/status/)
+- Write MEMORY.md entries for every failure (EPISODIC type)
+- Identify gap categories for recurring patterns
+- Update references/constraints.md if Prevention Rule is needed
+
+LIFESPAN HOOK: on-cycle-complete
+  Surface summary to human: what was built, what failed, what was learned.
+
+---
+
+## PHASE 7: IMPROVE
+
+- Apply self-improvement rules (runtime/self-improvement.md)
+- Run garbage_collector_agent if gc_interval has elapsed
+- Run harness review if 5 cycles have completed (runtime/observability.md)
+
+---
 
 ## LOOP CONDITION
-Continue unless:
-- No tasks remain AND no improvements are possible (transition to maintenance mode).
-- A human explicitly halts execution.
 
-**The system does not stop. It transitions.**
+Continue unless:
+  - No tasks remain (transition to maintenance mode)
+  - Human explicitly halts
+
+In single-pass mode: stop after Phase 7, surface summary, wait for human go-ahead.
 
 ---
 
-## SINGLE-PASS MODE BEHAVIOR
-When `CONFIG.yaml → runtime.loop_mode` is `single-pass`:
-1. Complete exactly one full cycle (UNDERSTAND through IMPROVE).
-2. Produce a quality report (`templates/quality.md`) summarizing what was done.
-3. **Stop and surface a summary to the human** — list every file changed, every PR created,
-   every test result, and any failures logged to MEMORY.md.
-4. Wait for explicit human approval before running another cycle.
+## SINGLE-PASS MODE
 
-This is the recommended starting mode. Switch to `continuous` only after reviewing the
-output of several `single-pass` cycles.
+When CONFIG.yaml loop_mode is single-pass:
+1. Complete one full cycle (Phases 0-7)
+2. Produce quality report (templates/quality.md)
+3. Surface to human: all files changed, PRs created, test results, failures
+4. Wait for explicit human approval before running another cycle

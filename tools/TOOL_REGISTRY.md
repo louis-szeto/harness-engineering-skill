@@ -77,3 +77,17 @@ attempt to invoke them or construct equivalent behavior from other tools.
 |------|-----------|-------|
 | Collect logs | `collect_logs()` | Aggregates application runtime logs only |
 | Performance profile | `performance_profile()` | **Application-level only**: request latency, throughput, heap usage. Must NOT query system hardware, CPU model, VM identifiers, or host OS internals. |
+
+---
+
+## PER-AGENT TOOL ASSIGNMENT
+
+See references/mcp-tools.md for the complete per-agent tool subset table.
+The dispatcher is responsible for assigning the correct subset at dispatch time.
+Never give an agent tools it does not need for its phase.
+
+## MCP PROTOCOL NOTE
+
+All tools in this registry are accessed via MCP (Model Context Protocol).
+No agent calls a tool implementation directly.
+All calls route through tools/tool-router.md for validation, redaction, and logging.

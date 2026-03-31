@@ -1,5 +1,5 @@
 ---
-name: harness-engineer
+name: harness-autonomous-runtime
 description: >
   A persistent autonomous engineering harness runtime that transforms any repository into a
   self-improving software system. Use this skill whenever the user wants to: build or run an
@@ -8,114 +8,152 @@ description: >
   development workflow, or run long-horizon autonomous software tasks. Trigger on phrases like
   "autonomous agent", "self-healing codebase", "harness engineering", "multi-agent pipeline",
   "continuous improvement loop", "OpenClaw skill", or any request for an agentic engineering
-  system that runs without constant human input.
+  system that runs without constant human input. Primarily designed for Claude Code and
+  OpenClaw environments.
 ---
 
 # HARNESS AUTONOMOUS RUNTIME
 
-A complete skill package for turning Claude Code into a **self-evolving software engineering
-system**. It combines persistent memory, multi-agent specialization, tool-driven execution, and
-a recursive improvement loop.
+A production-grade skill for Claude Code and OpenClaw that transforms a repository into a
+self-improving software system using six core harness engineering principles.
+
+---
+
+## SIX CORE PRINCIPLES
+
+### P1: CONTEXT ENGINEERING
+Treat context as a finite, precious resource. Curate aggressively.
+- Read CLAUDE.md / AGENTS.md first for base knowledge -- never infer what is written
+- Pull runtime/error logs for real-time status, not docs (docs lie; codebase does not)
+- 40% Rule: compact or outsource to a sub-agent when context exceeds 40% of window
+- Use sub-agents to isolate concerns and prevent context pollution in the main agent
+- Three-phase sub-agent model: Research => Plan => Implement (see agents/dispatcher.md)
+- Anything the agent cannot access is assumed to not exist
+
+### P2: TOOL USAGE
+Each sub-agent receives only the tools it needs -- no more.
+- Tools are assigned per-role (see tools/TOOL_REGISTRY.md, per-agent subsets)
+- All tools use MCP (Model Context Protocol) as the unified interface
+- Generated code runs in a sandbox isolated from the harness security context
+- Harness secrets are never visible to generated code or agent context directly
+
+### P3: VERIFICATION MECHANISM
+Every output is verified by someone other than who produced it.
+- Deterministic first: linter, pre-commit hooks, structured tests -- no LLM judgment
+- Generation-review isolation: the agent that writes code never reviews its own code
+- 3-layer recursive review: reviewer sub-agents => comment-generator => implementer =>
+  re-review, recursively until all reviewers approve
+- Details in references/testing-standards.md and agents/reviewer.md
+
+### P4: STATUS MANAGEMENT
+State lives outside the context window, in the repo.
+- Progress tracked in docs/status/PROGRESS.md (structured checklist markdown)
+- Git commit after every atomic task completion (checkpoint)
+- Context reset = new chat + structured handoff from docs/status/HANDOFF.md
+- Checkpoint recovery: new agent reads handoff and resumes from last checkpoint
+- Details in runtime/status-management.md
+
+### P5: OBSERVABILITY AND FEEDBACK CLOSED-LOOP
+Track what happens. Feed failures back into the harness, not the code.
+- Execution tracking in docs/generated/tool-logs/
+- Quality categorization and prioritization (see runtime/observability.md)
+- Abnormality detection: unexpected patterns trigger debugger_agent
+- Critical: when a failure occurs, analyze the harness gap -- not the model or code
+- Continuously improve the harness, not just the application
+- Details in runtime/observability.md
+
+### P6: HUMAN SUPERVISION
+Humans approve high-impact events. The harness surfaces them explicitly.
+- Plan approval before implementation begins
+- Architecture changes require human sign-off
+- Failure retry decisions after N retries
+- Lifespan hooks: on-start, on-plan-complete, on-cycle-complete, on-error, on-halt
+- Details in runtime/autonomy-rules.md
 
 ---
 
 ## NON-NEGOTIABLE RULES
 
-1. **EVERYTHING MUST BE IN-REPO** — if it is not in `docs/`, it does not exist.
-2. **NO IMPLEMENTATION WITHOUT** a spec, a plan, and validation criteria.
-3. **FAILURE = HARNESS GAP** — never patch output alone; fix the system cause.
-4. **ALWAYS** test → validate → document → score.
-5. **OPTIMIZATION PRIORITY (STRICT ORDER):**
-   1. Security
-   2. Correctness
-   3. Reliability
-   4. Performance
-   5. Memory efficiency
-   6. Maintainability
-   7. Cost
+1. CLAUDE.md / AGENTS.md IS GROUND TRUTH -- read it first, every session.
+2. CODEBASE OVER DOCS -- when they conflict, trust the code.
+3. 40% CONTEXT RULE -- compact or sub-agent before crossing 40% of context window.
+4. NO IMPLEMENTATION WITHOUT a research output, a plan, and validation criteria.
+5. GENERATION AND REVIEW ARE ALWAYS SEPARATE -- never the same agent.
+6. FAILURE = HARNESS GAP -- fix the harness, not just the symptom.
+7. OPTIMIZATION PRIORITY: Security => Correctness => Reliability => Performance =>
+   Memory => Maintainability => Cost
 
 ---
 
-## EXECUTION MODEL
+## SAFE START GUIDE
 
-The system runs a continuous loop:
+Before anything else: read PLATFORM_REQUIREMENTS.md and verify every item.
+The harness depends on platform enforcement that cannot be checked from these files alone.
 
-```
-UNDERSTAND → DOCUMENT → PLAN → BUILD → VERIFY → REFLECT → IMPROVE → LOOP
-```
+Step 1 -- Verify platform requirements (PLATFORM_REQUIREMENTS.md)
+Run through the five platform capability checks before any other step.
 
-The system never truly stops — it transitions into **maintenance**, **optimization**, or
-**garbage-collection** mode.
+Step 2 -- Sandbox first
+Run on a throwaway branch. Observe one single-pass cycle before enabling continuous mode.
 
----
+Step 2 -- Review CONFIG.yaml before every run
+| loop_mode            | single-pass | Change after sandbox validation        |
+| max_parallel_agents  | 3           | Increase after confirming behavior     |
+| block_destructive... | true        | Never change                           |
 
-## ⚠️ SAFE START GUIDE
+PRs always require human approval. There is no auto-merge.
 
-This harness is powerful. It will read and write repo files, run tests, create commits and
-PRs, and iterate continuously if configured to do so. Follow these steps before trusting it
-on a real repository.
+Step 3 -- Protect main branch
+Require human reviewers on main/trunk in your git host.
 
-### Step 1 — Sandbox first
-Run on a throwaway branch or a cloned repo. Observe one full `single-pass` cycle before
-enabling `continuous` mode.
-
-### Step 2 — Review CONFIG.yaml before every run
-| Setting | Value | Notes |
-|---------|-------|-------|
-| `loop_mode` | `single-pass` | Change to `continuous` only after sandbox validation |
-| `max_parallel_agents` | `3` | Increase to 8 only when comfortable with behavior |
-| `block_destructive_without_approval` | `true` | **Never change this** |
-
-**Auto-merge has been removed.** PRs are always human-approved. This is not configurable.
-
-### Step 3 — Restrict branch permissions in your git host
-The harness will only push to branches. Protect `main`/`trunk` with required human
-reviewers — the harness creates PRs, humans merge them.
-
-### Step 4 — Audit tool implementations
-The TOOL_REGISTRY describes tool contracts. The actual implementations are provided by your
-platform (Claude Code tools, CI scripts, etc.). Verify that `git_create_pr` and
-`scan_vulnerabilities` are wired to real, scoped implementations before running.
-
-### Step 5 — Graduate modes in order
-```
-single-pass → maintenance → continuous
-```
+Step 4 -- Graduation path: single-pass => maintenance => continuous
 
 ---
 
 ## HOW TO USE THIS SKILL
 
-When activated, Claude should:
+When activated in Claude Code or OpenClaw, read in this order:
 
-1. **Read `CONFIG.yaml`** to load runtime settings.
-2. **Read `runtime/loop.md`** to understand the execution loop.
-3. **Read `agents/dispatcher.md`** to understand how to decompose tasks.
-4. **Read `tools/TOOL_REGISTRY.md`** to understand available tool calls.
-5. **Load `MEMORY.md`** to restore context from prior cycles.
-
-Then begin the loop. Use the reference files below as needed during execution.
+1. CLAUDE.md or AGENTS.md if present (base context)
+2. CONFIG.yaml (runtime settings)
+3. runtime/loop.md (execution model)
+4. runtime/context-engineering.md (context budget rules)
+5. runtime/status-management.md (restore checkpoint if resuming)
+6. MEMORY.md (prior failure context)
+7. agents/dispatcher.md (task decomposition model)
+8. Begin the loop
 
 ---
 
 ## REFERENCE FILES
 
-| File | When to read |
-|------|-------------|
-| `CONFIG.yaml` | At startup — sets all runtime parameters |
-| `MEMORY.md` | At startup and after every failure |
-| `runtime/loop.md` | To execute each loop cycle |
-| `runtime/memory-system.md` | When writing or querying memory |
-| `runtime/self-improvement.md` | After any failure |
-| `runtime/prioritization.md` | When selecting the next task |
-| `runtime/autonomy-rules.md` | When blocked or uncertain |
-| `agents/dispatcher.md` | When decomposing a task into sub-agents |
-| `agents/*.md` | Load the specific agent file when spawning that agent |
-| `tools/TOOL_REGISTRY.md` | Before any tool call |
-| `tools/tool-router.md` | To validate and route tool requests |
-| `tools/execution-protocol.md` | For the full tool call lifecycle |
-| `references/harness-rules.md` | For core harness engineering constraints |
-| `references/testing-standards.md` | Before writing or running tests |
-| `references/security-performance.md` | Before any implementation |
-| `references/git-workflow.md` | Before any commit or PR |
-| `templates/` | When creating plans, ADRs, or agent manifests |
+| File                              | When to read                              |
+|-----------------------------------|-------------------------------------------|
+| CLAUDE.md / AGENTS.md             | First, every session -- base knowledge    |
+| CONFIG.yaml                       | At startup                                |
+| MEMORY.md                         | At startup and after every failure        |
+| runtime/loop.md                   | Each loop cycle                           |
+| runtime/context-engineering.md    | Continuously -- governs context budget    |
+| runtime/status-management.md      | At startup (resume) and after each task   |
+| runtime/observability.md          | After VERIFY phase                        |
+| runtime/memory-system.md          | When writing or querying memory           |
+| runtime/self-improvement.md       | After any failure                         |
+| runtime/prioritization.md         | When selecting the next task              |
+| runtime/autonomy-rules.md         | When blocked or at human gate             |
+| agents/dispatcher.md              | Before decomposing any task               |
+| agents/researcher.md              | Research phase                            |
+| agents/planner.md                 | Plan phase                                |
+| agents/implementer.md             | Implement phase                           |
+| agents/reviewer.md                | Review cycle                              |
+| agents/debugger.md                | On any failure                            |
+| agents/optimizer.md               | Optimization mode                         |
+| agents/garbage-collector.md       | GC interval                               |
+| tools/TOOL_REGISTRY.md            | Before any tool call                      |
+| tools/tool-router.md              | Routing and redaction rules               |
+| tools/execution-protocol.md       | Full tool call lifecycle                  |
+| references/harness-rules.md       | Core constraints                          |
+| references/testing-standards.md   | Before writing or running tests           |
+| references/security-performance.md| Before any implementation                 |
+| references/git-workflow.md        | Before any commit or PR                   |
+| references/mcp-tools.md           | MCP tool definitions and per-agent sets   |
+| templates/                        | Plans, ADRs, handoffs, status docs        |
