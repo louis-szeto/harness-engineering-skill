@@ -1,4 +1,4 @@
-# QUALITY REPORT — Cycle NNN
+# QUALITY REPORT -- Cycle NNN
 
 **Date:** YYYY-MM-DD  
 **Phase:** active | maintenance | optimization  
@@ -64,4 +64,4 @@ _Lower is better. Computed as: dead code % + doc gap % + open bugs_
 | Dead code (%) | | | |
 | Doc gaps | | | |
 | Open bugs | | | |
-| **Entropy Score** | | | ↓ / ↑ |
+| **Entropy Score** | | | v / ^ |

@@ -8,7 +8,7 @@ The harness runtime operates in one of three phases. Agents adapt their behavior
 **Trigger:** Tasks exist in the backlog with specs and plans.
 
 **Behavior:**
-- Full loop runs: UNDERSTAND → DOCUMENT → PLAN → BUILD → VERIFY → REFLECT → IMPROVE
+- Full loop runs: UNDERSTAND => DOCUMENT => PLAN => BUILD => VERIFY => REFLECT => IMPROVE
 - All agents active.
 - GC runs on schedule.
 - Prioritization engine drives task selection.
@@ -19,7 +19,7 @@ The harness runtime operates in one of three phases. Agents adapt their behavior
 **Trigger:** No new features. Only bug fixes, security patches, and dependency updates.
 
 **Behavior:**
-- Loop runs in reduced form: UNDERSTAND → VERIFY → REFLECT → IMPROVE
+- Loop runs in reduced form: UNDERSTAND => VERIFY => REFLECT => IMPROVE
 - `implementer_agent` only activated for confirmed bugs.
 - `tester_agent` runs full suite every cycle.
 - `garbage_collector_agent` runs every cycle (not on schedule).
@@ -44,10 +44,10 @@ Manual override requires a human decision logged in `docs/exec-plans/`.
 
 ```
 Active Development
-  ↓ (no more features, tests green)
+  v (no more features, tests green)
 Maintenance Mode
-  ↓ (no bugs, security clean)
+  v (no bugs, security clean)
 Optimization Mode
-  ↓ (new feature requested)
+  v (new feature requested)
 Active Development
 ```

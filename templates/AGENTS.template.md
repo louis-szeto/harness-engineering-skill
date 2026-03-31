@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Navigation map for the harness autonomous runtime. This file is for orientation only —
+Navigation map for the harness autonomous runtime. This file is for orientation only --
 it contains no implementation details. Follow the links to find what you need.
 
 ---
@@ -32,7 +32,7 @@ it contains no implementation details. Follow the links to find what you need.
 **Last cycle:** NNN  
 **Last quality report:** `docs/quality/QUALITY-NNN.md`  
 **Open bugs:** 0  
-**Entropy score:** —
+**Entropy score:** --
 
 ---
 

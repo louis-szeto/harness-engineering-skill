@@ -25,7 +25,7 @@ The self-improvement engine may **never**:
 
 **Self-improvement is append-only and additive.** The harness becomes more constrained
 over time, never less. If a constraint appears to be wrong, a human must review and
-remove it — the system cannot remove its own guardrails.
+remove it -- the system cannot remove its own guardrails.
 
 ---
 
@@ -33,12 +33,12 @@ remove it — the system cannot remove its own guardrails.
 
 ```
 failure
-  → root cause analysis (debugger_agent)
-  → identify system gap (missing constraint, test, or doc)
-  → create fix (implementer_agent / doc_writer_agent)
-  → verify fix eliminates failure
-  → update MEMORY.md with Prevention Rule
-  → re-deploy
+  => root cause analysis (debugger_agent)
+  => identify system gap (missing constraint, test, or doc)
+  => create fix (implementer_agent / doc_writer_agent)
+  => verify fix eliminates failure
+  => update MEMORY.md with Prevention Rule
+  => re-deploy
 ```
 
 ---
@@ -58,4 +58,4 @@ failure
 ## RESULT
 Over time, agents accumulate constraints and tests that prevent classes of errors entirely.
 The system's regression rate asymptotically approaches zero.
-Quality improves continuously. "Done" is not a state — it is a direction.
+Quality improves continuously. "Done" is not a state -- it is a direction.

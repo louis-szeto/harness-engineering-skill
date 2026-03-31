@@ -7,17 +7,17 @@ Centralized control point for all tool usage. Every tool call passes through her
 
 ## FLOW
 ```
-Agent → Tool Request → Tool Router → Validate → Execute → Normalize Output → Return → Agent Validates
+Agent => Tool Request => Tool Router => Validate => Execute => Normalize Output => Return => Agent Validates
 ```
 
 ---
 
 ## RESPONSIBILITIES
-1. **Validate inputs** — reject malformed or dangerous requests before execution.
+1. **Validate inputs** -- reject malformed or dangerous requests before execution.
 2. **Route** to the correct tool implementation.
-3. **Normalize outputs** — all results returned in standard format (see below).
-4. **Enforce safety constraints** — block destructive commands without approval.
-5. **Log every call** — write to `docs/generated/tool-logs/`.
+3. **Normalize outputs** -- all results returned in standard format (see below).
+4. **Enforce safety constraints** -- block destructive commands without approval.
+5. **Log every call** -- write to `docs/generated/tool-logs/`.
 
 ---
 
@@ -36,8 +36,8 @@ Agent → Tool Request → Tool Router → Validate → Execute → Normalize Ou
   "status": "success | failure | blocked",
   "tool": "<tool name>",
   "timestamp": "<ISO 8601>",
-  "outcome": "<one-line summary — no raw data, no file contents>",
-  "errors": "<error type and code — not full stack trace or log lines>",
+  "outcome": "<one-line summary -- no raw data, no file contents>",
+  "errors": "<error type and code -- not full stack trace or log lines>",
   "log_path": "docs/generated/tool-logs/<id>.json"
 }
 ```
@@ -69,7 +69,7 @@ Writes to any protected path must be **blocked** by the router and logged as a
 `BLOCKED_WRITE` event. If an agent submits a write request to a protected path,
 the dispatcher must be notified and the cycle must pause for human review.
 
-The one writable reference file is `references/constraints.md` — agents may **append**
+The one writable reference file is `references/constraints.md` -- agents may **append**
 Prevention Rules to it but may **never delete or overwrite** existing constraints.
 
 ---

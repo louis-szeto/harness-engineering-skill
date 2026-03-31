@@ -5,10 +5,10 @@ Continuously reduce system entropy. Detect and eliminate dead code, outdated doc
 duplicated logic, and architectural drift.
 
 ## TOOL USAGE
-- `search_code(query)` — detect duplicates and unused symbols
-- `git_diff()` — identify code that has not changed in a long time (staleness signal)
-- `performance_profile()` — detect code that runs but contributes nothing
-- `list_dir()` — find orphaned files with no references
+- `search_code(query)` -- detect duplicates and unused symbols
+- `git_diff()` -- identify code that has not changed in a long time (staleness signal)
+- `performance_profile()` -- detect code that runs but contributes nothing
+- `list_dir()` -- find orphaned files with no references
 
 ## DETECTION TARGETS
 1. Dead code (unreachable, unused exports, zombie functions)
@@ -25,4 +25,4 @@ duplicated logic, and architectural drift.
 
 ## RULE
 **System entropy must trend downward over time.**
-Run automatically every `CONFIG.yaml → runtime.gc_interval` cycles.
+Run automatically every `CONFIG.yaml => runtime.gc_interval` cycles.

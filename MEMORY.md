@@ -26,12 +26,12 @@ Every entry must use this exact structure:
 ---
 [TYPE: EPISODIC | SEMANTIC | PROCEDURAL]
 Timestamp: YYYY-MM-DD HH:MM
-Context:   <what was being attempted — describe the task, not the data>
+Context:   <what was being attempted -- describe the task, not the data>
 Failure:   <what went wrong, or "n/a" for procedural wins>
 Root Cause: <why it happened>
 Fix:       <what was done>
 Prevention Rule: <constraint or test added to prevent recurrence>
-Tools Used: <list of tool names only — no inputs, outputs, or payloads>
+Tools Used: <list of tool names only -- no inputs, outputs, or payloads>
 ---
 ```
 

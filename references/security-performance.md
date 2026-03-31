@@ -8,7 +8,7 @@ Priority order is fixed. Security is always first.
 
 ### Input Validation
 - Validate ALL external inputs at system boundaries.
-- Reject malformed input early — never pass it deeper.
+- Reject malformed input early -- never pass it deeper.
 - Use allowlists over denylists where possible.
 
 ### Injection Prevention
@@ -18,7 +18,7 @@ Priority order is fixed. Security is always first.
 
 ### Least Privilege
 - Services request only the permissions they need.
-- Credentials are never hardcoded — use environment variables or secret managers.
+- Credentials are never hardcoded -- use environment variables or secret managers.
 - File/network access is scoped to the minimum required path/host.
 
 ### Dependency Security
@@ -31,7 +31,7 @@ Priority order is fixed. Security is always first.
 ## PERFORMANCE
 
 ### Algorithmic Complexity
-- Prefer O(n) over O(n²) for any operation on user-controlled data.
+- Prefer O(n) over O(n2) for any operation on user-controlled data.
 - Document time complexity in function docstrings for non-trivial algorithms.
 
 ### Memory
@@ -46,5 +46,5 @@ Priority order is fixed. Security is always first.
 
 ### Profiling Rule
 - Baseline `performance_profile()` before any optimization.
-- Measure again after — optimizations without measurements are not optimizations.
+- Measure again after -- optimizations without measurements are not optimizations.
 - Never optimize without confirmed correctness first.

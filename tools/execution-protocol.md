@@ -33,7 +33,7 @@ Tool Router executes the tool and returns a normalized response (see router outp
 
 ## STEP 4: VALIDATE
 **The calling agent MUST:**
-- Check `status` field — treat anything other than `"success"` as a failure.
+- Check `status` field -- treat anything other than `"success"` as a failure.
 - Compare `data` against `EXPECTED OUTPUT` from the request.
 - If mismatch: retry (up to 3 times) with adjusted input.
 - If still failing after 3 retries: log to `MEMORY.md`, dispatch `debugger_agent`.
@@ -59,4 +59,4 @@ to `docs/references/`.
 ## RETRY RULES
 - Retry limit: 3 per tool call (overrides `CONFIG.yaml` for tool-level granularity).
 - On retry: modify input if possible; do not retry identical failing calls blindly.
-- On final failure: do not halt — log, dispatch debugger, and continue other tasks.
+- On final failure: do not halt -- log, dispatch debugger, and continue other tasks.

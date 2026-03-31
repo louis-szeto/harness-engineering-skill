@@ -12,7 +12,7 @@ At the start of every cycle, load `MEMORY.md` and scan for:
 
 ## WRITE PROTOCOL
 After every failure, write an entry to `MEMORY.md` using the format defined there.
-Prepend — newest entries first.
+Prepend -- newest entries first.
 
 ---
 
@@ -33,7 +33,7 @@ Lesson:  <one-sentence takeaway about system behavior>
 - Any string matching patterns: `*key*`, `*token*`, `*password*`, `*secret*`,
   `*credential*`, `Bearer *`, `-----BEGIN *`
 
-When in doubt, record the outcome and lesson only — not the data that triggered it.
+When in doubt, record the outcome and lesson only -- not the data that triggered it.
 
 ---
 

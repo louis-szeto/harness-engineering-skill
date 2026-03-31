@@ -24,7 +24,7 @@ What alternatives were considered and why were they rejected?
 
 | Option | Pros | Cons | Reason rejected |
 |--------|------|------|-----------------|
-| Chosen | | | — selected |
+| Chosen | | | -- selected |
 | Alt 1 | | | |
 | Alt 2 | | | |
 

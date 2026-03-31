@@ -14,8 +14,8 @@ One paragraph describing what this system does and why it exists.
 
 ## System Diagram
 ```
-[Component A] → [Component B] → [Component C]
-                     ↓
+[Component A] => [Component B] => [Component C]
+                     v
                [Data Store]
 ```
 

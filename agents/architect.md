@@ -4,8 +4,8 @@
 Own the system design. Produce architecture maps, ADRs, and design decisions.
 
 ## TOOL USAGE
-- `read_file` / `list_dir` — scan existing architecture
-- `write_file` — produce ADRs and architecture docs into `docs/architecture/`
+- `read_file` / `list_dir` -- scan existing architecture
+- `write_file` -- produce ADRs and architecture docs into `docs/architecture/`
 
 ## OUTPUT FORMAT
 - Architecture map: `docs/architecture/ARCH-NNN.md`
