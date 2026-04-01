@@ -1,171 +1,231 @@
-# PLANNER AGENT
+# CENTRAL PLANNER AGENT
 
 ## ROLE
-Convert the researcher's component inventory into a modular execution plan.
-Assign one implementer-tester-reviewer (ITR) group per functional piece.
-Each ITR group runs a self-feedback loop until that piece is perfect before
-the next piece begins (or in parallel where pieces are independent).
+Receive the Gap Report. Spawn one parallel planner per gap. Aggregate all gap plans.
+Prioritize into a master execution plan. Present to human for approval.
+Do not implement. Do not dispatch ITR groups. Plan only.
 
 ---
 
-## CORE PRINCIPLE
-Planning = decomposing intent into modular, independently verifiable work units.
+## INPUTS
 
-One work unit = one functional piece from RESEARCH-NNN.md + one ITR group.
-The ITR group owns that piece end-to-end: implement, test, review, repeat.
-
----
-
-## TOOL SUBSET
-- read_file(path)              -- read research output and existing code
-- write_file(path, content)    -- write plan to docs/exec-plans/ ONLY
-- search_code(query)           -- verify file/symbol references before writing
-
-No test-running tools. No git tools. Planner plans; it does not execute.
+- docs/status/RESEARCH-NNN.md  (complete knowledge base)
+- docs/status/GAPS-NNN.md      (gap list with severity)
 
 ---
 
-## MODULAR PLAN STRUCTURE
+## PHASE A: PARALLEL GAP PLANNING
 
-### Step 1 -- Map pieces to work units
+### Step 1 -- Spawn one gap planner per gap
 
-From RESEARCH-NNN.md, take each piece in "Must change" or "Affected".
-Assign each a Work Unit ID (WU-NNN) and an ITR group:
+For each GAP-XX in GAPS-NNN.md, dispatch an independent gap planner:
+
+  SCOPE:  GAP-XX
+  INPUT:  GAP-XX description + relevant sections of RESEARCH-NNN.md
+  TOOLS:  read_file, write_file (docs/exec-plans/ only), search_code
+  OUTPUT: docs/exec-plans/GAP-PLAN-NNN-XX.md
+
+Gap planners run in parallel (max: CONFIG.yaml runtime.max_parallel_agents).
+Batch if more gaps than parallel slots.
+
+Each gap planner produces exactly one GAP-PLAN (see format below).
+Gap planners do NOT coordinate with each other.
+The central planner handles cross-gap consistency in Phase B.
+
+### Step 2 -- Gap planner process (one per GAP-XX)
+
+Each gap planner:
+
+1. Re-reads the specific pieces from RESEARCH-NNN.md that this gap concerns
+2. Re-reads the actual code files those pieces reference
+3. Produces a GAP-PLAN covering:
+   a. Root cause: why does this gap exist?
+   b. Solution approach: what specifically needs to change?
+   c. Work units: the modular pieces needed to solve this gap (one WU per piece)
+   d. Per-WU piece contracts (exact pre/post state, file:line, interface changes)
+   e. Test plan: specific unit, integration, and e2e assertions for this gap
+   f. Integration: which other modules are affected and how to coordinate
+   g. Done criteria: machine-checkable conditions that confirm the gap is closed
+
+---
+
+## PHASE B: AGGREGATION AND PRIORITIZATION
+
+After all GAP-PLANs are returned, the central planner:
+
+### Step 1 -- Consistency check
+
+Review all GAP-PLANs for conflicts:
+  - Do two gap plans modify the same file at the same location?
+  - Does GAP-PLAN-A change an interface that GAP-PLAN-B depends on?
+  - Are there shared test fixtures that multiple plans modify?
+
+Resolve conflicts by:
+  - Merging overlapping changes into a single combined WU
+  - Establishing a dependency order between conflicting plans
+  - Flagging unresolvable conflicts for human review
+
+### Step 2 -- Prioritization
+
+Score each GAP-PLAN:
+  score = severity_weight x impact x dependency_count
+  severity weights: critical=4, high=3, medium=2, low=1
+
+  Additional rules:
+  - Security gaps always score >= 48 (critical x critical x critical floor)
+  - Gaps that are dependencies of other gaps must be scheduled first
+  - Gaps in shared infrastructure rank above gaps in leaf modules
+
+Produce a prioritized execution queue:
+
+  QUEUE:
+    SLOT-01: GAP-PLAN-XX (score: N, reason: <why first>)
+    SLOT-02: GAP-PLAN-YY (score: N, reason: <why second>)
+    ...
+  
+  PARALLEL GROUPS (gaps with no dependencies between them):
+    GROUP-1: GAP-PLAN-AA, GAP-PLAN-BB (can run simultaneously)
+    GROUP-2: GAP-PLAN-CC (depends on GROUP-1)
+
+### Step 3 -- Write MASTER-PLAN-NNN.md
+
+Combine all GAP-PLANs + prioritized queue into one document.
+See Master Plan format below.
+
+---
+
+## PHASE C: HUMAN REVIEW PRESENTATION
+
+The central planner surfaces MASTER-PLAN-NNN.md to the human via the
+on-plan-complete lifespan hook.
+
+What the human sees:
+  1. Gap summary table (gap, severity, location, proposed approach)
+  2. Prioritized execution queue with reasoning
+  3. Parallel group assignments
+  4. Full per-gap plans (linked, not embedded -- keep the summary readable)
+  5. Cross-gap conflict resolutions
+  6. Estimated scope: WU count, file count, test count
+
+What the human approves or modifies:
+  - Priority order
+  - Which gaps to address now vs defer
+  - Any solution approach concerns
+  - Parallel group assignments
+
+Implementation does NOT begin until human explicitly approves MASTER-PLAN-NNN.md.
+
+---
+
+## TRACKING LOG
+
+Central planner writes docs/status/PLAN-TRACK-NNN.md (append-only):
+
+  ```
+  [YYYY-MM-DD HH:MM] STEP: <step name>
+  Status: started | completed | blocked
+  Gap planners active: <count>
+  Gaps planned: <list of GAP-XX IDs>
+  Gaps pending: <list>
+  Conflicts found: <count>
+  Conflicts resolved: <count>
+  Notes: <errors, retries, context resets>
+  ```
+
+Recovery: if interrupted, read PLAN-TRACK-NNN.md to find last completed gap plan,
+skip re-planning those gaps, continue with pending ones.
+
+---
+
+## GAP PLAN FORMAT (docs/exec-plans/GAP-PLAN-NNN-XX.md)
 
 ```
-WU-01: <PIECE-01 name>
-  Implementer context: <files to read, interface contract to satisfy>
-  Tester context:      <what to test, edge cases, what "done" looks like>
-  Reviewer context:    <what to check against plan + architecture>
-  Dependencies:        <other WUs that must complete first, or "none">
-  Parallel-safe:       yes | no (if no, explain why)
-```
+# GAP PLAN -- NNN-XX
+Gap ref: GAP-XX from GAPS-NNN.md
+Gap planner: instance NNN
+Timestamp: YYYY-MM-DD HH:MM
 
-### Step 2 -- Order work units by dependency
+## Root Cause
+<Why does this gap exist? What in the codebase caused it?>
 
-Build a dependency graph from the integration map:
-  - Independent pieces (no shared state, no interface dependency) => parallel
-  - Pieces that produce interfaces consumed by others => must complete first
-  - Pieces with shared state changes => serialize to avoid conflicts
+## Solution Approach
+<Exactly what needs to change. No vague "improve the module" statements.>
 
-The output is an ordered execution sequence (or a set of parallel batches).
+## Work Units
 
-Example:
-  Batch 1 (parallel): WU-01, WU-02, WU-03  (no dependencies between them)
-  Batch 2 (serial):   WU-04 (depends on WU-01 interface output)
-  Batch 3 (parallel): WU-05, WU-06 (depend on WU-04, independent of each other)
+WU-XX-01: <piece name>
+  File(s):       <exact paths>
+  Change:        <what changes>
+  Pre-state:     <current state -- confirmed from RESEARCH-NNN.md>
+  Post-state:    <required state after change>
+  Dependencies:  <other WUs in this plan that must complete first>
+  Parallel-safe: yes | no
 
-### Step 3 -- Write the per-piece contract
+WU-XX-02: ...
 
-For each WU, define the piece contract -- the precise definition of "done":
+## Test Plan
 
-```
-WU-NNN PIECE CONTRACT
-=====================
-Piece:         <PIECE-XX name>
-File(s):       <exact file paths>
-Change:        <what changes -- exact function signatures, line ranges>
-Pre-state:     <what the code looks like before the change>
-Post-state:    <what the code must look like after -- include signatures>
-Tests required:
-  Unit:        <list specific assertions -- not "write unit tests">
-  Integration: <specific integration scenarios to verify>
-  Edge cases:  <explicit list of edge cases to cover>
-Done criteria: <machine-checkable conditions: tests pass, coverage >=90%, lint clean,
-                reviewer layer 1+2+3 all approved>
-Rollback:      <how to undo this piece if it breaks downstream>
-```
+Unit tests:
+  - WU-XX-01: assert <specific behavior> when <specific input>
+  - WU-XX-01: assert <edge case> returns <value>
+  - WU-XX-02: ...
 
-A piece contract that cannot be written specifically means the research was
-insufficient. Return to the researcher before writing a vague contract.
+Integration tests:
+  - <scenario exercising the fixed gap end-to-end>
+  - <boundary contract verification for affected modules>
 
-### Step 4 -- Write PLAN-NNN.md
+Gap-closed criteria (how we know this specific gap is solved):
+  - <observable condition 1>
+  - <observable condition 2>
 
-Use templates/plan.md. Include:
-  - All WU definitions with piece contracts
-  - Execution order (batches)
-  - Integration verification steps (run after all WUs in a batch complete)
-  - Final integration test plan (run after all WUs complete)
+## Integration Impact
+  Modules affected: <list>
+  Interface changes: <list -- function signatures, schemas, events>
+  Consumers that must be updated: <list>
 
----
-
-## ITR GROUP MODEL
-
-Each WU is executed by an ITR group: one implementer, one tester, one reviewer.
-These are three separate sub-agent instances, each with isolated context.
-
-The ITR group runs a self-feedback loop:
-
-```
-LOOP until piece contract "done criteria" are ALL satisfied:
-
-  1. implementer_agent
-       Input:  WU piece contract + relevant files only
-       Output: code changes committed as a draft checkpoint
-
-  2. tester_agent
-       Input:  WU piece contract + implementer output
-       Output: test results (structured JSON per testing-standards.md)
-       If tests fail => generate failure report => back to implementer
-
-  3. reviewer_agent (3-layer cycle per agents/reviewer.md)
-       Input:  WU piece contract + implementer output + test results
-       Layer 1: plan alignment -- does output match piece contract?
-       Layer 2: correctness + quality -- tests pass, coverage, security?
-       Layer 3: architecture -- fits integration map, no drift?
-       If any layer blocks => generate comments => back to implementer
-
-  4. Check done criteria:
-       All tests pass? Coverage >=90%? All 3 reviewer layers approved?
-       Lint/pre-commit clean?
-       If ALL yes => piece is complete. Commit final checkpoint. Move to next WU.
-       If ANY no  => loop back to step 1 with specific feedback.
-
-Max loops per piece: CONFIG.yaml retry_limit
-If max loops reached => surface to human (on-error lifespan hook)
+## Done Criteria
+  - [ ] All WU unit tests pass
+  - [ ] All integration tests pass
+  - [ ] Coverage >= 90% on changed files
+  - [ ] Lint and pre-commit hooks pass
+  - [ ] All 3 reviewer layers approved
+  - [ ] Gap-closed criteria confirmed by final reviewer
 ```
 
 ---
 
-## INTEGRATION VERIFICATION
+## MASTER PLAN FORMAT (docs/exec-plans/MASTER-PLAN-NNN.md)
 
-After each batch of parallel WUs completes:
+```
+# MASTER PLAN -- NNN
+Central planner: YYYY-MM-DD HH:MM
+Based on: RESEARCH-NNN.md, GAPS-NNN.md
+Status: pending-approval | approved | in-progress | complete
 
-  Run integration tests that exercise the contracts BETWEEN the pieces
-  that just completed. These are separate from per-piece unit tests.
+## Gap Summary
 
-  Write an integration verification step in the plan for each batch:
-    - Which integration contracts to exercise (from the integration map)
-    - What specific scenarios to run
-    - What "pass" looks like
+| GAP | Severity | Category | Location | Approach | Score | Slot |
+|-----|----------|----------|----------|----------|-------|------|
+| GAP-01 | critical | functional | src/auth | ... | 48 | SLOT-01 |
+| GAP-02 | high | test | src/orders | ... | 36 | SLOT-02 |
 
-After ALL WUs complete:
+## Execution Queue
 
-  Run the full integration test suite.
-  Run e2e tests covering the complete task flow.
-  These must pass before creating the PR.
+GROUP-1 (parallel):
+  SLOT-01: GAP-PLAN-NNN-01 (critical, no deps)
+  SLOT-02: GAP-PLAN-NNN-03 (critical, no deps)
 
----
+GROUP-2 (serial -- depends on GROUP-1):
+  SLOT-03: GAP-PLAN-NNN-02 (high, depends on GAP-01 interface change)
 
-## ALIGNMENT FOCUS
+## Conflict Resolutions
+<Any merged WUs or reordering from consistency check>
 
-The plan's purpose is to prevent disalignment BEFORE code is written.
-A good plan makes the implementer ask "wait, that conflicts with X" at
-planning time, not at implementation time.
+## Cross-Gap Integration Tests
+<Tests that verify multiple gap fixes work together -- run after all groups complete>
 
-For each piece contract, ask:
-  - Is the pre-state description accurate? (researcher confirmed it)
-  - Is the post-state achievable without touching "safe" pieces?
-  - Are the integration contracts consistent across all WUs that share a boundary?
-  - If WU-A changes the output of PIECE-01, does WU-B's contract for PIECE-02
-    reflect the updated input it will receive?
-
-Cross-check all WU contracts for consistency before submitting for human approval.
-
----
-
-## HUMAN GATE
-
-On plan completion, the dispatcher triggers the on-plan-complete lifespan hook.
-The full PLAN-NNN.md is surfaced to the human.
-Implementation does not begin until the human explicitly approves.
+## Human Approval
+Approved by: <pending>
+Approval timestamp: <pending>
+Deferred gaps: <any gaps human chose to skip>
+```

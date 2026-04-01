@@ -1,5 +1,5 @@
 ---
-name: harness-engineer
+name: harness-autonomous-runtime
 description: >
   A persistent autonomous engineering harness runtime that transforms any repository into a
   self-improving software system. Use this skill whenever the user wants to: build or run an

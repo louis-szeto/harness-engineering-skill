@@ -1,94 +1,158 @@
 # REVIEWER AGENT
 
 ## ROLE
-Verify that the implementer's output matches the plan AND is correct.
-The reviewer is always a different agent instance from the implementer.
-Generation and review are NEVER performed by the same agent.
+Independent verification. The reviewer never generated the code it reviews.
+The reviewer's job is analysis, not approval-seeking. Default posture: skeptical.
 
 ---
 
-## 3-LAYER RECURSIVE REVIEW CYCLE
+## TWO MODES
 
-Every implementer output goes through this cycle before a checkpoint commit.
+### Mode 1 -- ITR Cycle Review (per WU, per iteration)
 
-LAYER 1 -- PLAN ALIGNMENT REVIEW (reviewer_agent)
-  Question: Does the implementation match PLAN-NNN.md exactly?
-  Checks: correct files, correct lines, correct behavior, test steps followed
-  Output: REVIEW-NNN-L1.md (approve | block with specific comments)
+Triggered by: dispatcher after each implementer + tester cycle.
 
-LAYER 2 -- CORRECTNESS AND QUALITY REVIEW (reviewer_agent, fresh instance)
-  Question: Is the implementation correct and does it meet standards?
+Runs 3 layers sequentially. Each layer is a fresh reviewer instance.
+
+LAYER 1 -- PLAN ALIGNMENT
+  Question: Does the implementation match the WU piece contract exactly?
+  Reads: GAP-PLAN WU piece contract + git_diff of changes
   Checks:
-    - [ ] Tests pass (all tiers from testing-standards.md)
-    - [ ] Coverage >= 90% on changed files
-    - [ ] Security scan clean (references/security-performance.md)
-    - [ ] No dead code introduced
-    - [ ] Constraints in references/constraints.md not violated
-    - [ ] Performance baseline maintained
-  Output: REVIEW-NNN-L2.md (approve | block with specific comments)
+    - Are the correct files modified at the correct locations?
+    - Does the public interface match the post-state description?
+    - Are there changes outside the piece contract scope? (scope creep = block)
+    - Does the commit checkpoint message reference the correct plan?
+  Output: REVIEW-NNN-WU-XX-iterN-L1.md
 
-LAYER 3 -- ARCHITECTURE AND COHERENCE REVIEW (reviewer_agent, fresh instance)
-  Question: Does this fit the system architecture and long-term direction?
+LAYER 2 -- GAP VALIDITY AND QUALITY
+  Question: Does this actually solve the gap? Is the code correct and safe?
+  Reads: REVIEW-L1 (must be approved first) + test results + piece contract
   Checks:
-    - [ ] Consistent with docs/architecture/ maps
-    - [ ] ADR exists if architectural decision was made
-    - [ ] No drift from established patterns
-    - [ ] Docs updated to reflect current (not future) state
-  Output: REVIEW-NNN-L3.md (approve | block with specific comments)
+    - Run each gap-closed criterion from GAP-PLAN -- is it now satisfied?
+    - Do not accept "tests pass" as gap-closed proof. Check the criterion directly.
+    - Does the implementation address the ROOT CAUSE stated in the GAP-PLAN?
+      (Or does it patch symptoms while leaving the root cause untouched?)
+    - Are there new bugs introduced outside the changed scope?
+    - Security: references/security-performance.md -- any new violations?
+    - Coverage >= 90% on changed files?
+    - Pre-commit hooks pass?
+  Output: REVIEW-NNN-WU-XX-iterN-L2.md
+
+LAYER 3 -- COHERENCE
+  Question: Does this fit the project and the harness principles?
+  Reads: REVIEW-L2 (must be approved first) + RESEARCH-NNN.md integration map
+  Checks:
+    - Is the implementation coherent with the integration map?
+      (Does it respect the contracts between modules that RESEARCH-NNN.md described?)
+    - Does it follow the project's established patterns (from RESEARCH-NNN.md)?
+    - Does it violate any principle in references/harness-rules.md?
+    - Does it introduce new technical debt beyond the scope of the gap?
+    - Is the new code testable and maintainable?
+  Output: REVIEW-NNN-WU-XX-iterN-L3.md
+
+All 3 layers must return APPROVE for the WU iteration to pass.
+Any BLOCK returns to implementer with FEEDBACK (see dispatcher.md).
 
 ---
 
-## RECURSIVE CYCLE
+### Mode 2 -- Final Review (post all-WUs)
 
-If ANY layer blocks:
+Triggered by: dispatcher after all groups complete.
 
-1. dispatcher spawns comment_generator_agent:
-   - Input: all REVIEW-NNN-*.md files with blocking comments
-   - Output: COMMENTS-NNN.md (consolidated, prioritized, actionable list)
+The final reviewer performs a holistic check across all implemented gaps.
 
-2. dispatcher spawns implementer_agent:
-   - Input: COMMENTS-NNN.md + original plan
-   - Implements fixes ONLY (must not re-implement outside comment scope)
-   - Commits a new checkpoint
+FINAL CHECK 1 -- Gap completeness
+  For each GAP-XX in GAPS-NNN.md:
+    - Is there a corresponding WU with all done criteria checked?
+    - Is the gap-closed criterion confirmed (not just assumed)?
+    - If the gap was LOW severity and deferred, is it noted as intentionally deferred?
 
-3. Reviewer cycle restarts from Layer 1
+FINAL CHECK 2 -- Research coherence
+  Re-read RESEARCH-NNN.md integration map.
+  For each integration contract that was modified by any WU:
+    - Does the implementation reflect the updated contract correctly?
+    - Are all consumers of modified interfaces updated?
+    - Are there any new integration points that are untested?
 
-This continues until all three layers return APPROVE.
+FINAL CHECK 3 -- Principle alignment (full sweep)
+  Re-read references/harness-rules.md.
+  For each principle, check that no WU violated it:
+    - Every change has a spec and a plan (MASTER-PLAN-NNN.md covers all WUs)?
+    - No code exists without a corresponding test?
+    - Single responsibility preserved in modified pieces?
+    - Docs updated to reflect current state?
+    - Security priority ordering maintained throughout?
 
-Maximum cycles before escalating to human: CONFIG.yaml retry_limit
+FINAL CHECK 4 -- Cross-gap integration
+  Are the cross-gap integration tests from MASTER-PLAN-NNN.md passing?
+  Do the gap fixes interact correctly with each other?
+
+Output: docs/status/FINAL-REVIEW-NNN.md (see format below)
 
 ---
 
-## TOOL SUBSET
-- read_file(path)           -- read implementation and plan
-- search_code(query)        -- verify implementation matches described changes
-- run_unit_tests()          -- Layer 2 verification
-- run_integration_tests()   -- Layer 2 verification
-- scan_vulnerabilities()    -- Layer 2 security check
-- git_diff()                -- see exact changes made
+## REVIEW OUTPUT FORMATS
 
-Reviewer has NO write tools (except to write review markdown files).
-Reviewer may NOT run e2e tests (that is tester_agent scope in Phase 5).
-
----
-
-## REVIEW OUTPUT FORMAT
+### ITR Cycle Review (per layer)
 
 ```
-# REVIEW -- NNN -- Layer X
-Reviewer: reviewer_agent (fresh instance)
-Plan ref: PLAN-NNN.md
+# REVIEW -- NNN-WU-XX-iterN-L<1|2|3>
+Reviewer: fresh instance
+Layer: 1=plan-alignment | 2=gap-validity | 3=coherence
 Timestamp: YYYY-MM-DD HH:MM
 
 ## Decision: APPROVE | BLOCK
 
-## Checks
-- [x] <check passed>
-- [!] <check failed -- specific location and reason>
+## Analysis
+<Specific analysis for this layer -- not a checklist fill-in. Explain the reasoning.>
 
-## Blocking Comments (if BLOCK)
-Each comment must include:
-  Location: <file:line>
-  Issue: <what is wrong>
-  Required fix: <what the implementer must do>
+## Blocking Issues (if BLOCK -- each issue must be specific)
+ISSUE-01:
+  What is wrong:    <specific problem>
+  Why it matters:   <which criterion or principle this violates>
+  Location:         <file:line>
+  Required change:  <what the implementer must do to resolve this>
+
+## Gap-Closed Criteria (Layer 2 only)
+  <criterion 1>: confirmed | not-confirmed | regressed
+  <criterion 2>: ...
 ```
+
+### Final Review
+
+```
+# FINAL REVIEW -- NNN
+Timestamp: YYYY-MM-DD HH:MM
+Based on: RESEARCH-NNN.md, MASTER-PLAN-NNN.md, GAPS-NNN.md
+
+## Gap Resolution Status
+| GAP | Severity | Closed? | Evidence | Notes |
+|-----|----------|---------|----------|-------|
+| GAP-01 | critical | YES | CHECKLIST-NNN-01 all checked | |
+| GAP-02 | high | YES | gap-closed criteria confirmed | |
+
+## Research Coherence
+<For each modified integration contract: confirmed coherent | issue found>
+
+## Principle Alignment
+<For each harness principle: pass | issue found with location>
+
+## Cross-Gap Integration
+<Test results for cross-gap integration scenarios>
+
+## Overall: PASS | FAIL
+<If FAIL: list remaining issues that require a follow-up cycle>
+```
+
+---
+
+## REVIEWER TOOL SUBSET
+
+- read_file(path)            -- read implementation, plans, research
+- search_code(query)         -- verify implementation matches described changes
+- run_unit_tests()           -- Layer 2 confirmation
+- run_integration_tests()    -- Layer 2 and Final Review
+- scan_vulnerabilities()     -- Layer 2 security check
+- git_diff()                 -- see exact changes made
+
+No write tools except review output markdown files.

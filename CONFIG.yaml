@@ -5,11 +5,11 @@
 ## -----------------------------------------------------
 
 runtime:
-  max_parallel_agents: 3         # increase to 8 only after sandbox validation
-  loop_mode: single-pass         # SAFE DEFAULT -- change to "continuous" only when ready
+  max_parallel_agents: 5         # increase to 8 only after sandbox validation
+  loop_mode: continuous          # SAFE DEFAULT -- change to "continuous" only when ready
                                  # options: continuous | single-pass | maintenance
   retry_limit: 5
-  gc_interval: every_10_cycles
+  gc_interval: every_5_cycles
 
 priorities:
   security: critical

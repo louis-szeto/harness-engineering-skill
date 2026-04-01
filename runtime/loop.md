@@ -1,128 +1,159 @@
 # AUTONOMOUS LOOP
 
-Each full pass is one cycle. The loop runs phases sequentially.
+Each full pass is one cycle. Phases run sequentially.
 Context budget is monitored at every phase boundary.
+Every phase writes to its tracking log before and after.
 
 ---
 
 ## PHASE 0: SESSION INIT (every session start)
 
 1. Read CLAUDE.md / AGENTS.md (base knowledge)
-2. Read docs/status/PROGRESS.md (is this a resumption?)
-3. Read docs/status/HANDOFF.md (load checkpoint if resuming)
-4. Read MEMORY.md (failure patterns)
-5. Read references/constraints.md (apply prevention rules)
-6. Check context: if already above 20% from init reads, compact now
+2. Read docs/status/PROGRESS.md -- is this a resumption?
+3. Read docs/status/HANDOFF.md -- load checkpoint if resuming
+4. Read MEMORY.md (failure patterns and prevention rules)
+5. Read references/constraints.md (active prevention rules)
+6. If resuming: read the relevant tracking log to find last completed step
+   - Research interrupted => read RESEARCH-TRACK-NNN.md
+   - Planning interrupted => read PLAN-TRACK-NNN.md
+   - Implementation interrupted => read DISPATCH-TRACK-NNN.md
+7. If already above 20% context from init reads: compact before proceeding
 
 LIFESPAN HOOK: on-start
-  Surface to human: "Resuming cycle NNN from checkpoint T-NNN" or "Starting new cycle"
+  Surface to human: "Resuming cycle NNN from <checkpoint>" or "Starting new cycle NNN"
   Wait for human acknowledgment before proceeding.
 
 ---
 
-## PHASE 1: UNDERSTAND
+## PHASE 1: RESEARCH
 
-- Scan repo with list_dir and read_file (codebase is truth)
-- Update or verify architecture map in docs/architecture/
-- Identify current system state: healthy / degraded / unknown
-- Context check: if above 40%, compact before Phase 2
+Orchestrator: researcher_agent (agents/researcher.md)
 
----
+Phase A -- Parallel module analysis:
+  - Orchestrator scans full file structure
+  - Spawns parallel sub-researchers (one per module boundary)
+  - Each sub-researcher produces a Module Report
+  - Orchestrator aggregates into RESEARCH-NNN.md
 
-## PHASE 2: DOCUMENT
+Phase B -- Gap and violation analysis:
+  - Orchestrator analyzes findings against standards and harness principles
+  - Web search staged in docs/generated/search-staging/ if needed
+  - Produces GAPS-NNN.md (gap list only -- no solutions)
 
-- Verify docs completeness
-- Identify code that lacks a spec or plan
-- Dispatch doc_writer_agent for gaps before proceeding
-- Context check: if above 40%, sub-agent the scan
+Phase C -- Tracking:
+  - RESEARCH-TRACK-NNN.md updated at every step
+  - HANDOFF.md written if context reset needed mid-research
 
----
+Context check: at every sub-researcher aggregation boundary, check orchestrator
+context. If above 40%: compact orchestrator context, keep only aggregated summaries.
 
-## PHASE 3: PLAN
-
-- Dispatch researcher sub-agent (Phase 1 of 3-phase model)
-  - Input: task description and relevant file list
-  - Output: research summary (docs/status/RESEARCH-NNN.md)
-  - researcher uses read-only tools only
-
-- Dispatch planner sub-agent (Phase 2 of 3-phase model)
-  - Input: research summary
-  - Output: PLAN-NNN.md with exact steps, filenames, line numbers, test steps
-
-HUMAN GATE (P6): Surface plan to human for approval.
-  Do not proceed to Phase 4 without explicit human approval.
-  Record approval in PLAN-NNN.md with timestamp.
+Output: docs/status/RESEARCH-NNN.md + docs/status/GAPS-NNN.md
 
 ---
 
-## PHASE 4: BUILD
+## PHASE 2: PLAN
 
-- Dispatch implementer sub-agent (Phase 3 of 3-phase model)
-  - Input: approved plan
-  - Context limit: 40% per implementer instance
-  - Creates CHECKLIST-NNN.md before writing any code
-  - Commits a checkpoint after every atomic task (T-NNN)
-  - Updates PROGRESS.md after each checkpoint
+Orchestrator: planner_agent (agents/planner.md)
 
-- If implementer hits 40% context mid-task:
-  - Write HANDOFF.md
-  - Spawn a fresh implementer with HANDOFF + relevant files only
-  - Continue from "Next step"
+Phase A -- Parallel gap planning:
+  - Central planner spawns one gap planner per gap in GAPS-NNN.md
+  - Each gap planner produces GAP-PLAN-NNN-XX.md independently
+  - PLAN-TRACK-NNN.md updated as each gap plan completes
 
----
+Phase B -- Aggregation and prioritization:
+  - Central planner checks cross-gap consistency
+  - Resolves conflicts (merges overlapping WUs, sets dependency order)
+  - Scores and ranks all gaps
+  - Produces MASTER-PLAN-NNN.md with prioritized execution queue
 
-## PHASE 5: VERIFY (tool-driven, deterministic first)
-
-1. Run pre-commit hooks (linter, formatter) -- must pass before tests
-2. run_unit_tests() => run_integration_tests() => run_e2e_tests()
-3. collect_logs() for any failure
-4. scan_vulnerabilities() + dependency_audit()
-5. performance_profile() (application-level only)
-6. Run 3-layer recursive review cycle (agents/reviewer.md)
-
-Categorize all output per runtime/observability.md (Tier 1-4).
-
-IF Tier 1 failure:
-  Stop. Dispatch debugger_agent. Write MEMORY.md entry.
-  Identify harness gap (see runtime/observability.md).
-  Do NOT advance to Phase 6 until clean.
+HUMAN GATE (P6 -- Gate 1): on-plan-complete lifespan hook
+  Surface MASTER-PLAN-NNN.md to human.
+  Wait for explicit approval (with any modifications) before Phase 3.
+  Record approval timestamp in MASTER-PLAN-NNN.md.
 
 ---
 
-## PHASE 6: REFLECT
+## PHASE 3: IMPLEMENT
 
-- Write CYCLE-NNN.md summary (docs/status/)
-- Write MEMORY.md entries for every failure (EPISODIC type)
-- Identify gap categories for recurring patterns
-- Update references/constraints.md if Prevention Rule is needed
+Orchestrator: dispatcher (agents/dispatcher.md)
+
+For each GROUP in MASTER-PLAN-NNN.md execution queue:
+
+  Phase B -- Parallel ITR execution:
+    Spawn ITR group per WU (max: CONFIG.yaml max_parallel_agents).
+    Each group runs the self-feedback loop:
+      implement => test (isolated sandbox) => review (3 layers) =>
+      feedback => loop until done or on-error hook.
+    DISPATCH-TRACK-NNN.md updated after every iteration of every group.
+    Status reported to dispatcher after each cycle.
+
+  Integration check:
+    After GROUP completes: run GROUP's integration verification tests.
+    If fail: debugger_agent + surface to human before next GROUP.
+
+After ALL groups complete:
+  Run cross-gap integration tests from MASTER-PLAN-NNN.md.
+
+---
+
+## PHASE 4: FINAL REVIEW
+
+Agent: reviewer_agent (Final Review mode -- agents/reviewer.md)
+
+Checks:
+  - All gaps in GAPS-NNN.md have confirmed gap-closed criteria
+  - Implementation coherent with RESEARCH-NNN.md integration map
+  - No principle violations introduced
+  - All done criteria across all WUs checked off
+  - Cross-gap integration tests pass
+
+Output: docs/status/FINAL-REVIEW-NNN.md
 
 LIFESPAN HOOK: on-cycle-complete
-  Surface summary to human: what was built, what failed, what was learned.
+  Surface FINAL-REVIEW-NNN.md to human.
+  If PASS: cycle complete. Transition to maintenance or next cycle.
+  If FAIL: list remaining issues. Human decides: new cycle or defer.
 
 ---
 
-## PHASE 7: IMPROVE
+## PHASE 5: REFLECT
+
+- Write MEMORY.md entries for every failure (EPISODIC type)
+- Write CYCLE-NNN.md summary (docs/status/)
+- Identify harness gap categories for recurring patterns
+- Update references/constraints.md if Prevention Rule is needed (append-only)
+
+---
+
+## PHASE 6: IMPROVE
 
 - Apply self-improvement rules (runtime/self-improvement.md)
-- Run garbage_collector_agent if gc_interval has elapsed
-- Run harness review if 5 cycles have completed (runtime/observability.md)
+- Run garbage_collector_agent if gc_interval elapsed
+- Run harness review if 5 cycles completed (runtime/observability.md)
 
 ---
 
 ## LOOP CONDITION
 
 Continue unless:
-  - No tasks remain (transition to maintenance mode)
+  - No gaps remain (transition to maintenance mode)
   - Human explicitly halts
 
-In single-pass mode: stop after Phase 7, surface summary, wait for human go-ahead.
+In single-pass mode: stop after Phase 6, surface summary, wait for human go-ahead.
 
 ---
 
-## SINGLE-PASS MODE
+## COMPACT SUMMARY FORMAT
 
-When CONFIG.yaml loop_mode is single-pass:
-1. Complete one full cycle (Phases 0-7)
-2. Produce quality report (templates/quality.md)
-3. Surface to human: all files changed, PRs created, test results, failures
-4. Wait for explicit human approval before running another cycle
+At each phase transition, write a one-entry compact summary to PROGRESS.md:
+
+  ```
+  [YYYY-MM-DD HH:MM] CYCLE-NNN PHASE-N: <phase name>
+  Status: complete | in-progress | blocked
+  Output: <primary artifact produced>
+  Next: <next phase or action>
+  Key findings: <one sentence -- most important thing from this phase>
+  ```
+
+This ensures PROGRESS.md is always a readable compact state of the cycle,
+not a raw dump of all activity.
