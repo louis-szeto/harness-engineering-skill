@@ -45,7 +45,7 @@ Agent => Tool Request => Tool Router => Validate => Execute => Normalize Output 
 **Redaction rule**: before any tool result is written to a log or returned to an agent,
 the router must strip or mask values that match common credential patterns.
 This includes authentication tokens, API keys, passwords, secrets, certificates,
-and any opaque string that could be an authentication token or credential. For examples,
+and any opaque string that could be an authentication token or credential.
 
 Additionally, the router must never log:
 - Full file contents (log the path, not the content)

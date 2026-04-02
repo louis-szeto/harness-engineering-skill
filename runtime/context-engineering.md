@@ -145,6 +145,9 @@ See agents/researcher.md, agents/planner.md, agents/implementer.md for agent spe
 
 ## COMPACTION RULES
 
+For the full compaction algorithm (structured summary format, merge algorithm,
+preservation rules), see runtime/compaction.md.
+
 What to keep (high-signal):
   - Unresolved errors and their root causes
   - Architecture and design decisions made

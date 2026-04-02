@@ -211,3 +211,9 @@ Extract and pass only the relevant sections to each reviewer instance.
 Each reviewer instance reviews ONE WU at one layer.
 Parallel WUs => parallel reviewer instances, each in isolation.
 A reviewer that has seen WU-A must not review WU-B (cross-contamination of context).
+
+### Context budget
+- 40% max per reviewer instance.
+- If a layer requires reading more context than the budget allows:
+  extract only the relevant sections, write partial findings to HANDOFF.md,
+  and spawn a fresh reviewer instance for the continuation.

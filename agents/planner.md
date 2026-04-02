@@ -278,7 +278,8 @@ If a gap spans more than 5 functional pieces, split it:
 ### WU granularity rule
 
 A Work Unit must be completable by a single implementer in one context window (40% max).
-If a WU would require reading more than 10 files to implement, split it further.
+Each WU names 3-5 files at most (matching agents/implementer.md scope limit).
+If a gap requires more than 5 files across all its WUs, split into sub-gaps.
 The right size for a WU: one function, one class, one schema, or one interface contract.
 Not: "refactor the auth module". Yes: "add input validation to auth/token_validator.py:validate()".
 

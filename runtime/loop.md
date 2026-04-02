@@ -138,6 +138,9 @@ HUMAN GATE (P6 -- Gate 1): on-plan-complete lifespan hook
   Wait for explicit approval (with any modifications) before Phase 3.
   Record approval timestamp in MASTER-PLAN-NNN.md.
 
+Context check: at every gap plan completion boundary, check central planner
+context. If above 40%: compact, keep only gap plan summaries and prioritization.
+
 ---
 
 ## PHASE 2.5: CONTRACT NEGOTIATION (between Plan and Implement)

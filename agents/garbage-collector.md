@@ -72,3 +72,27 @@ Each GC cycle:
 
 "Technical debt is like a high-interest loan: pay it down continuously in
 small increments, not in painful bursts."
+
+---
+
+## SMALL-PIECE ENFORCEMENT
+
+### One violation category per GC pass
+Do not attempt to fix all detected violations in a single GC cycle.
+Prioritize the highest-impact category and dispatch one implementer fix at a time.
+
+### Scan scope per pass
+- Golden principle scan: one module at a time (not the full codebase at once).
+- Dead code scan: one module at a time, or search_code for specific patterns.
+- Doc staleness: one doc type at a time (API docs, then specs, then ADRs).
+- Each scan pass should cover at most 20 files before producing findings.
+
+### Refactoring PR granularity
+- One violation per PR (see GP-04: split files that do more than one thing).
+- Each PR touches at most 3-5 files.
+- If a fix requires more files, split into sequential PRs.
+
+### Context budget
+- 40% max per garbage-collector instance.
+- If the scan exceeds budget: write findings to HANDOFF.md, spawn fresh instance
+  for the next module.
