@@ -29,9 +29,15 @@ See agents/dispatcher.md DISPATCH FORMAT -> TOOLS ALLOWED field.
 
 ## PER-AGENT TOOL SUBSETS
 
+SENSITIVE PATH POLICY applies to ALL agents that use read_file or list_dir.
+See references/sensitive-paths.md. The tool router blocks forbidden paths.
+Agents must also apply the policy before making any read call.
+
 researcher_agent:
   read_file, list_dir, search_code, collect_logs, git_status, git_diff
   -- read-only, no writes
+  -- must filter file lists against references/sensitive-paths.md before dispatching
+     sub-researchers; sub-researchers receive pre-filtered lists
 
 planner_agent:
   read_file, write_file(docs/ only), search_code
@@ -80,7 +86,7 @@ Generated code execution (tests, linters, scripts) runs in an isolated sandbox:
   - The sandbox can communicate results back only through structured output files
 
 The harness agent and the sandbox are separate security contexts.
-This prevents prompt injection in test output from reaching the harness.
+This ensures that unintended directives in test output cannot reach the harness.
 (Rationale: Vercel security boundary model -- harness compute separate from
  generated code compute.)
 
@@ -91,7 +97,7 @@ This prevents prompt injection in test output from reaching the harness.
 All agents use this structure when requesting a tool call:
 
 TOOL:     <tool name from TOOL_REGISTRY.md>
-INPUT:    <parameters -- no secrets, no credential-shaped values>
+INPUT:    <parameters -- no authentication material or credentials>
 EXPECT:   <what a successful result looks like>
 VALIDATE: <how the agent will verify correctness>
 PLAN REF: <PLAN-NNN.md that authorized this action>

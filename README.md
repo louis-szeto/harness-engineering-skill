@@ -1,99 +1,226 @@
-# Harness Engineer
+# Harness Autonomous Runtime
 
-A production-grade OpenClaw skill that transforms Claude Code into a **self-improving software engineering system**. It uses persistent memory, role-specialized agents, tool-driven execution, and a recursive improvement loop to deliver continuously improving code quality.
+A production-grade skill for **Claude Code** and **OpenClaw** that transforms any repository into a self-improving software system. It orchestrates a multi-agent pipeline to continuously research, plan, implement, verify, and refine code -- guided by six core harness engineering principles.
+
+---
+
+## What It Does
+
+When loaded into a Claude Code or OpenClaw session, this skill instructs the agent to operate as a persistent engineering harness rather than a single-shot assistant. The harness:
+
+- **Researches** the codebase in parallel, producing structured knowledge bases
+- **Plans** changes as prioritized work units with explicit done criteria
+- **Implements** via isolated sub-agents, each with scoped tool access
+- **Verifies** every output through a 3-layer recursive review (plan alignment, gap validity, coherence)
+- **Reflects** after each cycle, writing memory entries and failure attributions
+- **Improves** itself over time by identifying and closing harness gaps
+
+The result: a system that gets measurably better at maintaining your codebase the longer it runs.
+
+---
 
 ## Six Core Principles
 
-| # | Principle | What it means |
-|---|-----------|---------------|
-| P1 | **Context Engineering** | Treat context as finite and precious — 40% rule, sub-agents to isolate concerns, codebase over docs |
-| P2 | **Tool Usage** | Each agent gets only the tools it needs via MCP; generated code runs sandboxed |
-| P3 | **Verification** | Every output verified by someone other than who produced it; deterministic checks before LLM judgment |
-| P4 | **Status Management** | State lives in the repo (PROGRESS.md, HANDOFF.md), not in the context window |
-| P5 | **Observability** | Track what happens; feed failures back into the harness, not the code |
-| P6 | **Human Supervision** | Humans approve plans, architecture changes, retry decisions, and lifespan hooks |
+| # | Principle | Summary |
+|---|-----------|---------|
+| P1 | Context Engineering | Treat context as a finite resource. Curate aggressively. Compaction, resets, and sub-agent isolation prevent attention degradation. |
+| P2 | Tool Usage | Each agent receives only the tools it needs. Narrow tool scopes reduce noise and hallucination risk. |
+| P3 | Verification Mechanism | Generator and evaluator are always separate agents. Sprint contracts define "done" before code is written. |
+| P4 | Status Management | State lives in the repo (markdown files, git checkpoints), never in the context window. Recovery is always possible. |
+| P5 | Observability and Feedback | Failures are attributed to harness gaps, not agent mistakes. The harness improves itself based on execution traces. |
+| P6 | Human Supervision | Plans, architecture changes, failure retries, and harness modifications all require human approval. |
 
-## Execution Model
+---
 
-The runtime runs a continuous 8-phase loop:
-
-```
-Session Init → Understand → Document → Plan → Build → Verify → Reflect → Improve → LOOP
-```
-
-Three loop modes available in `CONFIG.yaml`:
-- **single-pass** (safe default) — runs one cycle then stops
-- **maintenance** — reduced loop, bug fixes only
-- **continuous** — full autonomous loop (graduate to this after sandbox validation)
-
-When active work completes, the system transitions into **optimization** or **garbage-collection** mode rather than stopping.
-
-## Agent Architecture
-
-The dispatcher orchestrates a **three-phase model**: Research → Plan → ITR (Implementer-Tester-Reviewer) Execution.
-
-| Agent | Role |
-|-------|------|
-| **dispatcher** | Task decomposition, agent spawning, context budgeting — only agent that creates others |
-| **researcher** | Decomposes codebase into functional pieces, maps integrations, produces factual inventory only |
-| **planner** | Converts research into modular execution plans with work units and piece contracts |
-| **implementer** | Writes production code against approved plans; atomic commits with checkpoint discipline |
-| **tester** | Writes/runs tests; 90% coverage floor; structured JSON output; dispatches debugger on failure |
-| **reviewer** | 3-layer recursive review (plan alignment → correctness → architecture); generation-review isolation |
-| **debugger** | Root cause analysis — never patches symptoms; escalates to Prevention Rules after 2+ occurrences |
-| **optimizer** | Performance, memory, cost improvements (after security/correctness); requires before/after profiling |
-| **garbage-collector** | Dead code, outdated docs, drift detection; entropy must trend downward |
-
-## Project Structure
+## Loop Architecture
 
 ```
-CONFIG.yaml              Runtime settings (loop mode, priorities, coverage, git rules)
-SKILL.md                 Skill manifest — principles, startup sequence, file index
-MEMORY.md                Live memory store (episodic, semantic, procedural entries)
-PLATFORM_REQUIREMENTS.md Platform capability checks — read before first use
-
-agents/                  11 role-specialized agent definitions
-references/              Non-negotiable constraints and standards
-runtime/                 Execution engine, context rules, status management, observability
-templates/               Scaffolds for plans, ADRs, architecture docs, test plans, quality reports
-tools/                   Tool registry, routing, execution protocol
+Phase 0:  Session Init         (platform checks, fast paths, config loading)
+Phase 1:  Research             (parallel sub-researchers produce structured knowledge base)
+Phase 2:  Plan                 (parallel gap planners produce prioritized master plan)
+Phase 2.5: Contract Negotiation (generator + evaluator agree on frozen done criteria)
+Phase 3:  Implement            (parallel ITR groups: implement => test => 3-layer review)
+Phase 4:  Final Review         (holistic cross-gap coherence check)
+Phase 5:  Reflect              (memory entries, cycle archive, entropy assessment)
+Phase 6:  Improve              (failure attribution, cost tracking, harness-variant search)
 ```
 
-## Startup Sequence
+Each phase writes to tracking logs. Recovery from any interruption point is possible by reading the logs.
 
-1. Read `CLAUDE.md` or `AGENTS.md` if present (base context)
-2. Read `CONFIG.yaml` (runtime settings)
-3. Read `runtime/loop.md` (execution model)
-4. Read `runtime/context-engineering.md` (context budget rules)
-5. Read `runtime/status-management.md` (restore checkpoint if resuming)
-6. Read `MEMORY.md` (prior failure context)
-7. Read `agents/dispatcher.md` (task decomposition model)
-8. Begin the loop
+---
 
-## Safe Start
+## Agent Roster
 
-1. Read `PLATFORM_REQUIREMENTS.md` and verify every item
-2. Run on a throwaway branch in **single-pass** mode first
-3. Keep `max_parallel_agents: 3` until behavior is validated
-4. Require human reviewers on main/trunk in your git host
-5. Graduate: single-pass → maintenance → continuous
+| Agent | Role | Key Constraint |
+|-------|------|---------------|
+| **Researcher** | Parallel codebase analysis, knowledge compression | Read-only. Never plans or proposes solutions. |
+| **Planner** | Gap analysis, work unit decomposition, master plan | Never implements. Plans only. |
+| **Implementer** | Code writing, test authoring, checkpoint commits | Scoped to src/ and tests/ only. Never improvises. |
+| **Reviewer** | 3-layer independent verification | No write tools. Skeptical default posture. Never approves its own work. |
+| **Tester** | Test execution, structured result reporting | Write access to tests/ only. |
+| **Debugger** | Failure investigation, root cause analysis | Never patches symptoms. |
+| **Architect** | Architecture maps, ADRs, design decisions | Write access to docs/ only. |
+| **Optimizer** | Performance profiling, dependency cleanup | Never compromises correctness or security. |
+| **Garbage Collector** | Dead code detection, entropy reduction | Recurring cadence. Enforces golden principles. |
+| **Doc Writer** | Documentation production and maintenance | Write access to docs/ only. |
+| **Dispatcher** | ITR group orchestration, queue management | Orchestrator only. Never calls implementation tools directly. |
 
-## Configuration (`CONFIG.yaml`)
+---
 
-- **runtime**: `loop_mode` (single-pass/maintenance/continuous), `max_parallel_agents` (default 3), `retry_limit` (5), `gc_interval` (every 10 cycles)
-- **priorities**: security, correctness (critical) → reliability, performance (high) → memory, maintainability (medium) → cost (low)
-- **testing**: 90% coverage minimum; unit + integration + e2e required
-- **git**: trunk-based, PR required with human approval, 2-day branch lifetime, no auto-merge
-- **memory**: persistent, unlimited history, pattern detection after 2 failures
-- **self_improvement**: failures generate constraints, tests, or documentation
-- **tools**: max 3 retries, all calls logged, destructive actions blocked without approval
+## Operating Phases
 
-## Non-Negotiable Rules
+The harness transitions automatically between three modes:
 
-1. CLAUDE.md / AGENTS.md is ground truth — read it first, every session
-2. Codebase over docs — when they conflict, trust the code
-3. 40% context rule — compact or delegate to sub-agent before crossing 40% of context window
-4. No implementation without research output, a plan, and validation criteria
-5. Generation and review are always separate — never the same agent
-6. Failure = harness gap — fix the system cause, not the symptom
-7. Optimization priority (strict): security → correctness → reliability → performance → memory → maintainability → cost
+```
+Active Development  -->  Maintenance Mode  -->  Optimization Mode
+       ^                                        |
+       +----------------------------------------+
+                    (new feature requested)
+```
+
+- **Active Development**: Full loop. All agents active. New features, gap resolution.
+- **Maintenance Mode**: Reduced loop. Bug fixes, security patches, dependency updates only.
+- **Optimization Mode**: Performance profiling only. No new features or bugs allowed.
+
+---
+
+## File Structure
+
+```
+harness-autonomous-runtime/
+  SKILL.md                              # Skill entry point and navigation map
+  CONFIG.yaml                           # Runtime configuration (safe defaults)
+  MEMORY.md                             # Live memory store (failure patterns, prevention rules)
+  PLATFORM_REQUIREMENTS.md              # Platform verification checklist
+
+  agents/                               # Per-agent role definitions
+    researcher.md                       #   Research orchestrator and sub-researchers
+    planner.md                          #   Gap planning and master plan aggregation
+    implementer.md                      #   Code implementation discipline
+    reviewer.md                         #   3-layer verification with skeptical calibration
+    tester.md                           #   Test execution and structured reporting
+    debugger.md                         #   Failure investigation and root cause
+    architect.md                        #   Architecture maps and ADRs
+    optimizer.md                        #   Performance and dependency optimization
+    garbage-collector.md                #   Entropy reduction and golden principles
+    doc-writer.md                       #   Documentation production
+    dispatcher.md                       #   ITR group orchestration and queue management
+
+  runtime/                              # Runtime system protocols
+    loop.md                             #   Autonomous loop phases and transitions
+    context-engineering.md              #   40% rule, compaction vs reset, sub-agent isolation
+    compaction.md                       #   Incremental summary format and merge algorithm
+    instruction-discovery.md            #   Progressive disclosure walk algorithm
+    status-management.md                #   Tracking logs, handoffs, checklists, recovery
+    autonomy-rules.md                   #   Human gates, NEVER rules, escalation protocol
+    observability.md                    #   Execution tracking, quality tiers, abnormality detection
+    self-improvement.md                 #   Failure attribution, efficiency metrics, variant search
+    self-assessment.md                  #   Per-cycle health score (0-25)
+    cost-tracking.md                    #   Token budget, cost-per-gap metric
+    memory-system.md                    #   Read/write/redaction protocols for MEMORY.md
+    prioritization.md                   #   Scoring formula for gap ordering
+    config-system.md                    #   Multi-layer config with deep merge
+    error-recovery.md                   #   Error taxonomy and recovery protocol
+    hook-system.md                      #   Lifecycle and tool-use hook protocol
+
+  references/                           # Shared rules and standards
+    harness-rules.md                    #   Non-negotiable harness engineering principles
+    testing-standards.md                #   Coverage, deterministic verification order
+    security-performance.md             #   Input validation, least privilege, external content handling
+    git-workflow.md                     #   Trunk-based development, checkpoints, worktree isolation
+    mcp-tools.md                        #   Per-agent tool subsets and sandbox isolation
+    sensitive-paths.md                  #   Forbidden read path policy
+    mechanical-enforcement.md           #   Linter-based architecture enforcement
+    constraints.md                      #   Auto-generated prevention rules (append-only)
+    phases.md                           #   Operating phase definitions and transitions
+
+  tools/                                # Tool infrastructure
+    TOOL_REGISTRY.md                    #   Available tools, blocked tools, per-agent assignment
+    tool-router.md                      #   Routing, redaction, protected paths, safety rules
+    execution-protocol.md               #   Tool call lifecycle (request, route, validate, log)
+
+  templates/                            # Document templates
+    plan.md                             #   Implementation plan
+    contract.md                         #   Sprint contract (frozen done criteria)
+    gap-report.md                       #   Gap findings from research
+    handoff.md                          #   Context reset checkpoint
+    final-review.md                     #   Post-cycle holistic review
+    quality.md                          #   Per-cycle quality report
+    test-plan.md                        #   Test strategy
+    ADR.md                              #   Architecture decision record
+    architecture.md                     #   System architecture document
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+1. **Claude Code** or **OpenClaw** as the host platform
+2. A git repository with branch protection on main/trunk
+3. Platform enforces: MCP tool routing, sandboxed test execution, scoped git credentials, human approval gates
+
+### First Run
+
+1. Install the skill in your Claude Code or OpenClaw environment
+2. Open your target repository
+3. Read `PLATFORM_REQUIREMENTS.md` and verify all items
+4. Keep defaults in `CONFIG.yaml`: `loop_mode: single-pass`, `max_parallel_agents: 3`
+5. Run on a throwaway branch for the first cycle
+6. After a clean single-pass cycle, inspect the generated artifacts in `docs/status/`
+7. Graduate to continuous mode only after two clean cycles
+
+### Graduation Path
+
+```
+single-pass  -->  maintenance  -->  continuous
+  (validate)      (stable)         (trusted)
+```
+
+---
+
+## Key Design Decisions
+
+**Why markdown files instead of a database?**
+Every piece of state is a grepable plaintext file in the repo. Any agent (or human) can inspect it without special tooling. Recovery from context resets works by reading files, not querying APIs.
+
+**Why separate generator and reviewer?**
+Research shows that LLMs systematically talk themselves into approving work they've identified issues with. A skeptical reviewer that never generated the code is the single highest-leverage intervention for autonomous coding quality.
+
+**Why contract negotiation before implementation?**
+Defining frozen done criteria before any code is written prevents the most expensive failure mode: building the wrong thing correctly.
+
+**Why 40% context limit?**
+Agent decision quality degrades measurably beyond ~40% context utilization. The harness enforces this with compaction (within phases) and resets (between phases), keeping every sub-agent operating with full attention.
+
+---
+
+## Configuration
+
+Primary configuration lives in `CONFIG.yaml` at the skill root. Higher-priority overrides can be set via:
+
+| Priority | Source | Location |
+|----------|--------|----------|
+| 1 (lowest) | Skill defaults | `CONFIG.yaml` |
+| 2 | User settings | `~/.harness/settings.json` |
+| 3 | Project settings | `.harness/settings.json` (committed) |
+| 4 | Local override | `.harness/settings.local.json` (gitignored) |
+| 5 (highest) | Environment | `HARNESS_*` env vars |
+
+Key settings:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `runtime.loop_mode` | `single-pass` | `single-pass` | `continuous` | `maintenance` |
+| `runtime.max_parallel_agents` | `3` | Max concurrent ITR groups |
+| `runtime.retry_limit` | `5` | Max iterations per work unit |
+| `runtime.gc_interval` | `every_10_cycles` | Garbage collection cadence |
+| `testing.coverage_minimum` | `90` | Required coverage on changed files |
+| `memory.max_history` | `500` | Max memory entries before trimming |
+
+---
+
+## License
+
+This skill is provided as-is for use in Claude Code and OpenClaw environments.
