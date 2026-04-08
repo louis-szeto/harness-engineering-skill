@@ -152,6 +152,27 @@ Action if scheduling is unavailable:
 
 ---
 
+### 10. Required Platform Capabilities
+
+The skill is instruction-only. It does NOT include, install, or execute any binaries.
+All operations depend on the host platform providing these capabilities:
+
+| Capability | How the skill uses it | What to verify |
+|-----------|----------------------|----------------|
+| Agent spawning | The skill instructs the orchestrator to spawn subagents. The platform's native mechanism handles the actual spawn. | Confirm your platform can spawn subagents with scoped tool access. |
+| File read/write | Agents read codebase files and write to docs/status/, docs/exec-plans/. | Confirm the platform's tool router allows read/write within these paths. |
+| Code search | Agents search the codebase for patterns and dependencies. | Confirm the platform provides code search capability. |
+| Git operations | Agents create branches, commit, and create PRs. | Confirm the platform provides git tools scoped to the target repo. |
+| File/line counting | Agents estimate codebase size to determine scope splits. | Confirm the platform provides file-count or line-count capability. No raw shell required. |
+| Web search (optional) | Q-Agents may search for framework standards. Results are staged, never written directly. | Confirm web search is available or disable it in references/mcp-tools.md. |
+
+The skill NEVER invokes raw shell commands. Any shell-like operations (file counting,
+process monitoring, test execution) must be provided by the platform as tools.
+The TOOL_REGISTRY explicitly forbids raw shell invocation. If your platform does not
+provide these capabilities as tools, the skill will not function correctly.
+
+---
+
 ## SAFE START SEQUENCE (run before any real-repo use)
 
 1. Clone the target repo to a throwaway branch

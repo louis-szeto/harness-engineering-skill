@@ -25,7 +25,7 @@ Claude Code agents get SIGKILL when directory has 100K+ files. Always:
 - Give each agent ONLY the files/directories it needs
 - For research: read CLAUDE.md/AGENTS.md first, then specific modules
 - For implementation: 3-5 files max per subagent
-- Use `find -name "*.rs" | wc -l` to estimate scope before launching
+- Use platform file-count or line-count tools to estimate scope before launching (never raw shell)
 
 ---
 
