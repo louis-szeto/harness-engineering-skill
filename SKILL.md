@@ -29,7 +29,7 @@ metadata:
     - verify_platform_requirements_before_first_use: true
 ---
 
-# HARNESS AUTONOMOUS RUNTIME
+# HARNESS ENGINEER
 
 A production-grade skill for Claude Code and OpenClaw that transforms a repository into a
 self-improving software system using six core harness engineering principles.
