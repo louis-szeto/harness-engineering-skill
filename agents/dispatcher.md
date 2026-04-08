@@ -1,9 +1,9 @@
 # DISPATCHER (IMPLEMENTATION ORCHESTRATOR)
 
 ## ROLE
-Execute the approved MASTER-PLAN-NNN.md. Spawn ITR groups in parallel per WU.
-Run the self-feedback loop per group. Track status after every cycle.
-Move the queue forward. Report to human on completion of each group.
+Execute the approved MASTER-PLAN-NNN.md via a structured worktree. Spawn ITR groups
+in parallel per WU. Run the self-feedback loop per group. Track status after every
+cycle. Move the queue forward. Report to human on completion of each group.
 After all groups: trigger final review.
 
 ---
@@ -16,10 +16,74 @@ After all groups: trigger final review.
 
 ---
 
+## PHASE A.5: WORKTREE AGENT
+
+Before initializing the queue, produce a structured execution worktree.
+
+Spawn a single worktree agent:
+
+  INPUT:  MASTER-PLAN-NNN.md + all GAP-PLAN-NNN-*.md
+  OUTPUT: docs/status/WORKTREE-NNN.md
+
+The worktree agent:
+  1. Reads all GAP-PLANs and extracts WUs
+  2. Builds a dependency graph between WUs
+  3. Assigns execution slots respecting:
+     - Dependency order (must-complete-before relationships)
+     - Parallel groups (WUs with no cross-dependencies)
+     - CONFIG.yaml max_parallel_agents limit
+  4. Defines checkpoint boundaries
+  5. Outputs the structured worktree document
+
+WORKTREE-NNN.md format:
+```
+# WORKTREE -- NNN
+Worktree agent: instance NNN
+Timestamp: YYYY-MM-DD HH:MM
+Based on: MASTER-PLAN-NNN.md, GAP-PLAN-NNN-*.md
+
+## Execution Graph
+
+GROUP-1 (parallel):
+  SLOT-01: WU-01 (GAP-PLAN-NNN-01, SIMPLE)
+    Dependencies: none
+    Files: <list>
+    Estimated effort: S | M | L
+
+  SLOT-02: WU-02 (GAP-PLAN-NNN-02, STANDARD)
+    Dependencies: none
+    Files: <list>
+    Estimated effort: S | M | L
+
+GROUP-2 (depends on GROUP-1):
+  SLOT-03: WU-03 (GAP-PLAN-NNN-03, STANDARD)
+    Dependencies: WU-01 (interface change in <file>)
+    Files: <list>
+    Estimated effort: S | M | L
+
+## Checkpoint Boundaries
+CHECKPOINT-1: After GROUP-1
+  - [ ] All WU-01 done criteria checked
+  - [ ] All WU-02 done criteria checked
+  - [ ] Integration tests for GROUP-1 pass
+
+## Parallelization Safe Set
+<WUs that can run simultaneously without conflict>
+<WUs that MUST be sequential with reasons>
+
+## Total WU Count: N
+## Estimated Groups: N
+## Critical Path: GROUP-1 -> GROUP-2 -> GROUP-N
+```
+
+---
+
 ## PHASE A: QUEUE INITIALIZATION
 
-Read MASTER-PLAN-NNN.md execution queue.
-For each GROUP in the queue, identify all WUs and their ITR assignments.
+Read WORKTREE-NNN.md (produced by the worktree agent).
+The worktree provides the execution graph with GROUP assignments, dependency
+ordering, and checkpoint boundaries.
+For each GROUP in the worktree, identify all WUs and their ITR assignments.
 Initialize docs/status/DISPATCH-TRACK-NNN.md (see tracking format).
 
 Write one CHECKLIST-NNN-XX.md per WU (in docs/status/) before spawning any agent:
@@ -32,7 +96,7 @@ Write one CHECKLIST-NNN-XX.md per WU (in docs/status/) before spawning any agent
 
 ## PHASE B: PARALLEL ITR GROUP EXECUTION
 
-For each GROUP (parallel batch from MASTER-PLAN):
+For each GROUP (from WORKTREE-NNN.md execution graph):
 
   Spawn one ITR group per WU in the group (up to CONFIG.yaml max_parallel_agents).
   Each ITR group runs its self-feedback loop independently (see ITR LOOP below).

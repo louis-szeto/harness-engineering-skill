@@ -76,7 +76,11 @@ Context management has two mechanisms. Choosing the wrong one degrades quality.
 
 | Condition | Action |
 |-----------|--------|
-| Context >40% AND crossing a phase boundary | **RESET**, not compact |
+| Context >40% AND crossing between Q-Agent and R-Agent phases | Compact (same research phase) |
+| Context >40% AND crossing between research and design phases | **RESET** |
+| Context >40% AND crossing between design and outline phases | **RESET** |
+| Context >40% AND crossing between outline and master planning | **RESET** |
+| Context >40% AND crossing between master planning and implementation | **RESET** |
 | Context >40% within a phase | Compact or sub-agent handoff |
 | Context anxiety detected (repetitive errors, degraded reasoning) | **RESET** regardless of phase |
 | Session end approaching (time or token limit) | Write HANDOFF.md, plan for reset |
@@ -133,32 +137,54 @@ Every session begins with this sequence:
 
 ---
 
-## THREE-PHASE SUB-AGENT MODEL
+## FIVE-PHASE SUB-AGENT MODEL
 
-Every non-trivial task is executed by three sequential sub-agents, each with a
-strictly limited context and tool set.
+Every non-trivial task is executed by five sequential phases, each with a
+strictly limited context and tool set. Each phase has a human approval gate.
 
-PHASE 1 -- RESEARCHER
-  Role: Compress information. Find truth. Stay objective.
+PHASE 1 -- RESEARCH (Q-Agent + R-Agent)
+  Role: Ask. Record. Compress. Find truth.
   Input: task description + relevant file list
-  Process: read files, read logs, read code -- do not plan, do not opine
-  Output: a compressed summary of system state (what is true, what files matter)
-  Rule: researcher produces NO implementation plans and NO opinions
-  Context limit: 40% before outsourcing to nested sub-agent
+  Process: Q-Agents read files and ask questions. R-Agents receive answers
+           and record facts. Orchestrator aggregates into knowledge base.
+  Output: RESEARCH-NNN.md (compressed knowledge base -- NO gap analysis)
+  Rule: researcher produces NO implementation plans, NO opinions, NO gap analysis
+  Context limit: 40% per Q-Agent or R-Agent instance
+  Human gate: GATE-R1 (Q-Agent questions reviewed before R-Agent recording)
 
-PHASE 2 -- PLANNER
-  Role: Convert research into leverage. Align intent.
-  Input: researcher output
-  Process: produce exact implementation steps with filenames, line numbers, snippets
-  Output: a plan document (templates/plan.md) with explicit testing steps
-  Rule: planner exists for alignment -- to make implementer catch errors early
-  The plan is the contract. Implementer must not deviate without a plan revision.
+PHASE 2 -- DESIGN DISCUSSION
+  Role: Align on direction. Understand the desired end state.
+  Input: RESEARCH-NNN.md + user's stated vision
+  Process: design agents ask open questions, identify patterns, propose directions
+  Output: DESIGN-NNN.md (confirmed design direction)
+  Rule: design agents produce NO implementation steps and NO code
+  Context limit: 40% per design agent instance
+  Human gate: GATE-P1 (design direction must be approved before outlining)
+
+PHASE 3 -- OUTLINE + GAP ANALYSIS
+  Role: Map the path from current to desired state. Identify what's missing.
+  Input: approved design direction + RESEARCH-NNN.md
+  Process: outline agents perform gap analysis (5 categories) and map changes
+           to files/modules with test/validation strategies
+  Output: GAPS-NNN.md + OUTLINE-NNN.md (change outlines with testing strategies)
+  Rule: outline agents produce detailed change specs, not code
+  Context limit: 40% per outline agent instance
+  Human gate: GATE-P2 (outlines must be approved before master planning)
+
+PHASE 4 -- MASTER PLANNING
+  Role: Consolidate, prioritize, schedule.
+  Input: all approved outlines + GAPS-NNN.md
+  Process: master planner classifies changes (SIMPLE/STANDARD/COMPLEX),
+           resolves conflicts, scores, prioritizes, schedules
+  Output: MASTER-PLAN-NNN.md + GAP-PLAN-NNN-XX.md files
+  Rule: master planner is the contract. Deviation requires revision.
   Context limit: 40%
+  Human gate: GATE-P3 (master plan must be approved before implementation)
 
-PHASE 3 -- IMPLEMENTER + REVIEWER CYCLE
+PHASE 5 -- IMPLEMENTATION + REVIEW CYCLE
   Role: Execute the plan. Do not improvise.
-  Input: planner output (plan document)
-  Process: write code, run tests, commit checkpoints
+  Input: master plan + worktree (WORKTREE-NNN.md)
+  Process: implement, test, review in ITR loops driven by worktree
   Constraint: reviewer sub-agent checks each output against the plan (not just correctness)
   Context limit: 40% per implementer instance -- reset between major tasks
 

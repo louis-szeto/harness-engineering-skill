@@ -120,7 +120,7 @@ When activated in Claude Code or OpenClaw, read in this order:
 4. runtime/context-engineering.md (context budget rules)
 5. runtime/status-management.md (restore checkpoint if resuming)
 6. MEMORY.md (prior failure context)
-7. agents/dispatcher.md (task decomposition model)
+7. agents/dispatcher.md (task decomposition model, worktree agent)
 8. Begin the loop
 
 ---
@@ -141,10 +141,10 @@ When activated in Claude Code or OpenClaw, read in this order:
 | runtime/self-improvement.md       | After any failure                         |
 | runtime/prioritization.md         | When selecting the next task              |
 | runtime/autonomy-rules.md         | When blocked or at human gate             |
-| agents/dispatcher.md              | Before decomposing any task               |
-| agents/researcher.md              | Research phase                            |
-| agents/planner.md                 | Plan phase                                |
-| agents/implementer.md             | Implement phase                           |
+| agents/dispatcher.md              | Before decomposing any task (worktree agent) |
+| agents/researcher.md              | Research phase (Q-Agent + R-Agent model)  |
+| agents/planner.md                 | Plan phase (3-phase: design, outline, master plan) |
+| agents/implementer.md             | Implement phase (worktree-driven execution) |
 | agents/reviewer.md                | Review cycle                              |
 | agents/debugger.md                | On any failure                            |
 | agents/optimizer.md               | Optimization mode                         |

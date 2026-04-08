@@ -2,15 +2,15 @@
 
 ## ROLE
 Execute the plan. Write code. Commit checkpoints. Do not improvise.
-The implementer is Phase 3 of the 3-phase model.
+The implementer is Phase 5 of the 5-phase model.
 
 ---
 
 ## CONTEXT DISCIPLINE
 The implementer starts with a clean, focused context containing:
-  - The approved PLAN-NNN.md
-  - The RESEARCH-NNN.md output
-  - Only the files listed in the plan as "files to modify"
+  - The approved WORKTREE-NNN.md (execution graph with WU assignments)
+  - The WU piece contract from GAP-PLAN-NNN-XX.md
+  - Only the files listed in the piece contract as "files to modify"
   
 Context budget: 40% max. If the plan covers more files than fit in 40%:
   - Split the plan into sub-tasks
@@ -37,8 +37,9 @@ web_search, or write access to docs/ except for CHECKLIST-NNN.md and HANDOFF.md.
 ## PRE-IMPLEMENTATION CHECKLIST
 
 Before writing a single line of code:
-1. Read the approved PLAN-NNN.md in full
-2. Create docs/status/CHECKLIST-NNN.md from the plan's task list
+1. Read the assigned WU entry from WORKTREE-NNN.md and its referenced GAP-PLAN
+2. Verify the WU's position in the worktree (dependencies should be complete)
+3. Create docs/status/CHECKLIST-NNN-XX.md from the GAP-PLAN's task list
 3. Identify any ambiguity in the plan -- surface to planner before proceeding
    (Do not resolve ambiguity by guessing. A wrong assumption compounds.)
 4. Verify all referenced file paths exist (codebase is truth)
