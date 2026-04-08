@@ -283,6 +283,79 @@ If a gap requires more than 5 files across all its WUs, split into sub-gaps.
 The right size for a WU: one function, one class, one schema, or one interface contract.
 Not: "refactor the auth module". Yes: "add input validation to auth/token_validator.py:validate()".
 
+### WU sizing guidelines
+
+| Size | Files | Scope | Example |
+|------|-------|-------|---------|
+| **XS** | 1 | Single function or config change | Add a validation rule |
+| **S** | 1-2 | One component or endpoint | Add a new API endpoint |
+| **M** | 3-5 | One feature slice | User registration flow |
+| **L** | 5-8 | Multi-component feature | Search with filtering and pagination |
+| **XL** | 8+ | **Too large -- break it down further** | — |
+
+If a WU is L or larger, split it before scheduling. Agents perform best on S and M WUs.
+
+**When to split a WU further:**
+- It would take more than one focused session of agent work
+- You cannot describe the acceptance criteria in 3 or fewer bullet points
+- It touches two or more independent subsystems
+- You find yourself writing "and" in the WU title (a sign it is two WUs)
+
+---
+
+## VERTICAL SLICING STRATEGY
+
+Instead of building all database, then all API, then all UI (horizontal slicing),
+build one complete feature path at a time (vertical slicing):
+
+```
+Bad (horizontal):                Good (vertical):
+Task 1: Entire DB schema         Task 1: User registration (schema + API + basic UI)
+Task 2: All API endpoints        Task 2: User login (auth schema + API + UI)
+Task 3: All UI components        Task 3: Create task (task schema + API + UI)
+Task 4: Connect everything       Task 4: List tasks (query + API + UI)
+```
+
+Each vertical slice delivers working, testable functionality.
+
+### When to use which strategy
+
+| Strategy | When | How |
+|----------|------|-----|
+| **Vertical** | Feature work (preferred) | One complete path through the stack per WU |
+| **Contract-first** | Backend/frontend parallel dev | Define API contract, implement against it in parallel |
+| **Risk-first** | Uncertain or risky components | Tackle the riskiest piece first (fail fast) |
+
+---
+
+## PARALLELIZATION RULES
+
+When assigning WUs to parallel groups:
+
+**Safe to parallelize:** Independent feature slices, tests for already-implemented features, documentation
+
+**Must be sequential:** Database migrations, shared state changes, dependency chains
+
+**Needs coordination:** Features that share an API contract (define contract first, then parallelize)
+
+---
+
+## CHECKPOINT PLACEMENT
+
+Arrange WUs so that:
+1. Dependencies are satisfied (build foundation first)
+2. Each WU leaves the system in a working state
+3. Verification checkpoints occur after every 2-3 WUs
+4. High-risk WUs are early (fail fast)
+
+Add explicit checkpoints in MASTER-PLAN-NNN.md:
+```
+CHECKPOINT: After WU-01 through WU-03
+- [ ] All tests pass
+- [ ] Application builds without errors
+- [ ] Core user flow works end-to-end
+```
+
 ### Per-WU piece contract completeness
 
 Before writing a WU, ask: can an implementer complete this with ONLY:

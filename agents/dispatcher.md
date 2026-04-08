@@ -109,16 +109,28 @@ LOOP until WU done criteria are ALL checked off:
      Tests run: all test types listed in GAP-PLAN test plan for this WU
      Output: TEST-RESULT-NNN-WU-XX-iterN.md (structured format)
 
-  3. REVIEW (3-layer analysis -- see reviewer.md)
-     Spawn: reviewer_agent
-     Input: WU piece contract + checkpoint + TEST-RESULT
-     The reviewer analyzes for all of the following:
-       Layer 1 -- Plan alignment: does implementation match GAP-PLAN piece contract?
-       Layer 2 -- Gap validity: does this actually solve the gap? Or just appear to?
-                  Run against gap-closed criteria from GAP-PLAN.
-       Layer 3 -- Principle coherence: does it comply with references/harness-rules.md?
-                  Is it coherent with the project (integration map from RESEARCH-NNN.md)?
+  3. REVIEW (mandatory 2-reviewer pattern, every cycle, never skip)
+     Spawn TWO reviewers:
+       reviewer-1: runs `/codex:review` — plan alignment + test log verification +
+                  research doc coherence + format/protocol standards +
+                  five-axis review (correctness, readability, architecture,
+                  security, performance) with severity labels
+       reviewer-2: runs `/codex:adversarial-review` — attack surface + edge cases +
+                  bypass analysis + cross-project coherence
+     BOTH reviewers MUST:
+       - Read the test results (TEST-RESULT file)
+       - Reference plan docs (GAP-PLAN piece contract)
+       - Reference research docs (RESEARCH-NNN.md integration map)
+       - Analyze WHY tests failed (read error/failure logs, not just pass/fail)
+       - Check if implementation addresses the ACTUAL problem/gap as planned
+       - Check coherence with core principles and project structure
+       - Check format/communication/protocol is standard, accurate, efficient
+       - Label all findings with severity (Critical / Important / Suggestion / Nit)
+     Input: WU piece contract + checkpoint + TEST-RESULT + plan/research refs
      Output: REVIEW-NNN-WU-XX-iterN.md (approve | block with specific analysis)
+
+     After fix cycles: repeat BOTH `/codex:review` AND `/codex:adversarial-review`
+     recursively on every re-test/re-implement cycle. Never skip either.
 
   4. STATUS REPORT to dispatcher (after every iteration regardless of outcome)
      Dispatcher logs to DISPATCH-TRACK-NNN.md:

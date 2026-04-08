@@ -61,6 +61,56 @@ Never implement something not in the plan without a plan revision.
 
 ---
 
+## INCREMENTAL IMPLEMENTATION RULES
+
+### Rule 0: Simplicity First
+Before writing any code, ask: "What is the simplest thing that could work?"
+After writing code, review it against:
+- Can this be done in fewer lines?
+- Are these abstractions earning their complexity?
+- Am I building for hypothetical future requirements, or the current task?
+
+Three similar lines of code is better than a premature abstraction.
+Implement the naive, obviously-correct version first.
+
+### Rule 0.5: Scope Discipline
+Touch only what the task requires. Do NOT:
+- "Clean up" code adjacent to your change
+- Refactor imports in files you're not modifying
+- Remove comments you don't fully understand
+- Add features not in the spec because they "seem useful"
+- Modernize syntax in files you're only reading
+
+If you notice something worth improving outside your task scope, note it in
+HANDOFF.md -- don't fix it.
+
+### Rule 1: One Thing at a Time
+Each increment changes one logical thing. Don't mix concerns.
+One commit = one logical change.
+
+### Rule 2: Keep It Compilable
+After each increment, the project must build and existing tests must pass.
+Don't leave the codebase in a broken state between steps.
+
+### Rule 3: Safe Defaults
+New code should default to safe, conservative behavior.
+Disabled by default, opt-in. Fail closed, not open.
+
+### Rule 4: Rollback-Friendly
+Each increment should be independently revertable:
+- Additive changes (new files, new functions) are easy to revert
+- Modifications to existing code should be minimal and focused
+- Avoid deleting something in one commit and replacing it in the same commit
+
+### Increment Checklist (after each increment)
+- [ ] The change does one thing and does it completely
+- [ ] All existing tests still pass
+- [ ] The build succeeds
+- [ ] Type checking / linting passes
+- [ ] The change is committed with a descriptive checkpoint message
+
+---
+
 ## TOOL USAGE RULES
 - NEVER fabricate file contents -- read the file first
 - NEVER assume a test passes without running it

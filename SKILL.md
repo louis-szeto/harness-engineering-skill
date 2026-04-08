@@ -74,6 +74,14 @@ See: runtime/autonomy-rules.md, runtime/prioritization.md
 6. FAILURE = HARNESS GAP -- fix the harness, not just the symptom.
 7. OPTIMIZATION PRIORITY: Security => Correctness => Reliability => Performance =>
    Memory => Maintainability => Cost
+8. MINIMAL SCOPE PER SUBAGENT — Estimate codebase size first (`wc -l`). If >5K lines, split into multiple subagents by module/feature/layer. Pin exact files to read (no wandering). One research doc + one code area per subagent max. If a subagent gets killed or times out, the scope was too large — split further.
+   **Adaptive timeouts:** Default timeouts are guidelines, not hard kills. Check process logs before killing — if the agent is actively producing output, extend the timeout instead of killing. Only kill-and-split if the agent is silent/stuck for >10min or producing garbage. Scale timeouts by effort: S-effort=15min, M-effort=20min, L-effort=30-40min.
+9. ACTIVE MONITORING CRON — **MANDATORY**: Every time you launch a new batch of subagents, you MUST immediately update the monitoring cron with the current session IDs, expected output files, and remaining queue BEFORE doing anything else. This is not optional. Without it, dead agents go unnoticed and the pipeline stalls. Steps: (a) Launch subagents. (b) IMMEDIATELY call `cron action:update` with current job ID to refresh the cron payload. (c) Verify cron updated successfully. If you skip this step, the entire orchestration breaks. **Rule of thumb: If you spawned agents, update the cron in the same turn.**
+10. ALL SUBAGENTS ARE CLAUDE CODE — Every implementor, tester, and reviewer is a Claude Code agent spawned via `claude --print --permission-mode bypassPermissions`. No exceptions.
+11. MAX PARALLEL = 5 — Up to 5 Claude Code agents running simultaneously. If rate/API limit errors encountered, drop to 4, then 3, etc until no errors. Resume increasing after 5 clean minutes.
+12. TOKEN EXHAUSTION RECOVERY: If ALL active agents hit rate/API limits (429/500), tokens are exhausted. For each spawned agent, set a cron to resume it every hour. Destroy the cron if the agent is killed. Same applies to main session — set hourly recovery cron if rate-limited. This ensures full automation continues after token refresh.
+12. 10-MIN STUCK KILL — If any agent produces no output for >10 minutes, log the issue, kill it, and split the task into smaller subtasks before respawning.
+13. TRACKING EVERYWHERE — Every phase, cycle, and step writes to tracking logs. DISPATCH-TRACK, error log, compact summaries, progress logs. Recovery must be able to pick up from any interruption point.
 
 ---
 
@@ -147,6 +155,7 @@ When activated in Claude Code or OpenClaw, read in this order:
 | references/harness-rules.md       | Core constraints                          |
 | references/testing-standards.md   | Before writing or running tests           |
 | references/security-performance.md| Before any implementation                 |
+| references/simplification-checklist.md | During review and refactoring        |
 | references/git-workflow.md        | Before any commit or PR                   |
 | references/mcp-tools.md           | MCP tool definitions and per-agent sets   |
 | references/sensitive-paths.md     | Forbidden read paths -- enforced in-skill |
