@@ -123,6 +123,35 @@ Action if human gates cannot be enforced:
 
 ---
 
+### 8. Subagent Permission Mode
+
+| Check | Enforcement | How to verify |
+|-------|-------------|---------------|
+| Subagents run with the platform's configured permission mode (not `bypassPermissions`) | PLATFORM | Review subagent spawn command. Confirm no `--permission-mode bypassPermissions` flag. |
+| Platform enforces per-agent tool subsets at the infrastructure level | PLATFORM | Confirm tool-subset config in platform matches references/mcp-tools.md. |
+| Sensitive operations (write to protected paths, network access, credential use) require platform-level approval | PLATFORM | Attempt a protected write from a subagent. Confirm it is blocked unless explicitly approved. |
+
+Action if permission mode cannot be enforced:
+  Do not spawn autonomous subagents. Run the harness in single-pass with a human
+  reviewing and approving every tool call before execution. The skill does NOT
+  override the platform's permission configuration — it relies on it.
+
+---
+
+### 9. Scheduling and Token Recovery
+
+| Check | Enforcement | How to verify |
+|-------|-------------|---------------|
+| If cron/scheduler is used for monitoring or recovery, credentials are managed by the platform (not embedded in skill files) | PLATFORM | Review scheduler config. Confirm no tokens, API keys, or credentials are stored in skill files or docs/. |
+| Scheduled jobs are scoped to the current session only (no persistent access beyond session lifetime) | PLATFORM | Confirm scheduled jobs cannot outlive the session that created them. |
+| Token refresh and rate-limit recovery follow platform rate limits (no automated retry loops without backoff) | PLATFORM | Review retry logic. Confirm exponential backoff and platform rate limit headers are respected. |
+
+Action if scheduling is unavailable:
+  The harness operates without automated scheduling. The human operator manually
+  restarts interrupted cycles using the recovery protocol (docs/status/DISPATCH-TRACK-NNN.md).
+
+---
+
 ## SAFE START SEQUENCE (run before any real-repo use)
 
 1. Clone the target repo to a throwaway branch
