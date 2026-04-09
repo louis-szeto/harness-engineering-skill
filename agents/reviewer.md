@@ -232,6 +232,27 @@ Output: docs/status/FINAL-REVIEW-NNN.md (see format below)
 
 ## REVIEW OUTPUT FORMATS
 
+## CLEAN PASS POLICY
+
+Review output MUST be one of exactly two values:
+
+APPROVE -- zero findings, zero comments, zero conditions, zero suggestions.
+  The implementation is correct, complete, coherent, and clean.
+  Nothing further is needed.
+
+BLOCK -- at least one finding that requires changes.
+  Every finding must include: exact location, exact issue, exact fix needed.
+  Severity is labeled but does NOT affect the BLOCK decision -- ALL severities
+  block equally. A Nit blocks the same as a Critical.
+
+FORBIDDEN outcomes:
+  - "Approve with suggestions" -- those suggestions are findings => BLOCK
+  - "Pass with minor comments" -- those comments are findings => BLOCK
+  - "Approve but follow up on X" -- X is a finding => BLOCK
+  - "Conditional pass" -- conditions are findings => BLOCK
+
+Only CLEAN PASS advances the WU. No exceptions.
+
 ### ITR Cycle Review (per layer)
 
 ```

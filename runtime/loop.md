@@ -80,6 +80,16 @@ If no fast-path applies: proceed to Step 0c (standard init).
    - Implementation interrupted => read DISPATCH-TRACK-NNN.md
 7. If already above 20% context from init reads: compact before proceeding
 
+### Step 0d -- Storage format selection (before Phase 1)
+
+Ask user: "How should research documentation be saved?"
+  Options:
+    A) Markdown files in docs/ folder (default)
+    B) Obsidian LLM wiki
+  IF user selects B: ask vault location. Record setting.
+  This setting is used throughout all phases for output location.
+  Record in PROGRESS.md: storage_format = <choice>, vault_path = <path or null>
+
 LIFESPAN HOOK: on-start (combined with Check 4 above)
   Surface: session type, cycle number, checkpoint state, platform check results
   Wait: human acknowledgment before proceeding to Phase 1.
@@ -187,8 +197,6 @@ Spawn a single worktree agent to produce WORKTREE-NNN.md:
 The worktree provides the execution order for Phase 3.
 
 ### Step 1 -- Contract Proposal (implementer agent)
-
-### Step 1 -- Contract Proposal (implementer agent)
 For each WU in MASTER-PLAN-NNN.md, a temporary implementer instance proposes:
   - What files will be created or modified (exact paths)
   - What the implementation approach will be (brief)
@@ -232,10 +240,15 @@ For each GROUP in WORKTREE-NNN.md execution graph:
   Phase B -- Parallel ITR execution:
     Spawn ITR group per WU (max: CONFIG.yaml max_parallel_agents).
     Each group runs the self-feedback loop:
-      implement => test (isolated sandbox) => review (3 layers) =>
-      feedback => loop until done or on-error hook.
+      implement => test (isolated sandbox, various environments/edge cases) =>
+      review (2-4 reviewers, clean-pass-only) =>
+      feedback => loop until CLEAN PASS or on-error hook.
     DISPATCH-TRACK-NNN.md updated after every iteration of every group.
     Status reported to dispatcher after each cycle.
+    Set a cron job to periodically check on subagent progress.
+    If any agent is stuck for >10 minutes without output, log the issue,
+    kill it, and spawn subagents to break the task into smaller pieces.
+    Complex WUs: break into subtasks, spawn nested ITR group per subtask.
 
   Integration check:
     After GROUP completes: run GROUP's integration verification tests.

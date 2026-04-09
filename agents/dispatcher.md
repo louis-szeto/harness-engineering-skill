@@ -149,6 +149,18 @@ STANDARD gap ITR (full 3-layer):
 COMPLEX gap ITR (full 3-layer, with integration gate between sub-gaps):
   Run full ITR per sub-gap, plus an integration verification step between sub-gaps.
 
+### Nested ITR Breakdown
+
+If a WU is COMPLEX (spans multiple modules or >5 files):
+  1. Break the WU into subtasks
+  2. Spawn a separate ITR group per subtask (implementer + tester + reviewers)
+  3. Each subtask ITR group runs its own self-feedback loop
+  4. After all subtask ITR groups pass cleanly, run integration check
+  5. If integration fails, spawn a new ITR group for the integration fix
+
+Always encourage breaking down into smaller subtasks and using ITR
+group subagents in nested layers within subprojects.
+
 ---
 
 ## ITR SELF-FEEDBACK LOOP (per WU)
@@ -170,31 +182,64 @@ LOOP until WU done criteria are ALL checked off:
      Spawn: tester_agent
      Input: WU piece contract + implementer checkpoint
      Environment: isolated sandbox (no access to harness context or secrets)
-     Tests run: all test types listed in GAP-PLAN test plan for this WU
+     Tests run:
+       - All test types listed in GAP-PLAN test plan for this WU
+       - Edge cases and boundary conditions
+       - Various environments (if applicable: different OS, different config)
+       - Attack tests (injection, overflow, unauthorized access attempts)
      Output: TEST-RESULT-NNN-WU-XX-iterN.md (structured format)
 
-  3. REVIEW (mandatory 2-reviewer pattern, every cycle, never skip)
-     Spawn TWO reviewers:
-       reviewer-1: runs `/codex:review` — plan alignment + test log verification +
-                  research doc coherence + format/protocol standards +
-                  five-axis review (correctness, readability, architecture,
-                  security, performance) with severity labels
-       reviewer-2: runs `/codex:adversarial-review` — attack surface + edge cases +
-                  bypass analysis + cross-project coherence
-     BOTH reviewers MUST:
+  3. REVIEW (mandatory multi-reviewer pattern, every cycle, never skip)
+     Spawn 2-4 reviewers:
+
+       reviewer-1 (REQUIRED): runs `/codex:review`
+         - Plan alignment + test log verification
+         - Research doc coherence + format/protocol standards
+         - Five-axis review (correctness, readability, architecture,
+           security, performance) with severity labels
+
+       reviewer-2 (REQUIRED): runs `/codex:adversarial-review`
+         - Attack surface + edge cases + bypass analysis
+         - Cross-project coherence
+
+       reviewer-3 (optional, for STANDARD/COMPLEX gaps):
+         - Integration coherence: does this change integrate correctly
+           with all modules/projects/external APIs?
+
+       reviewer-4 (optional, for COMPLEX gaps or security-critical changes):
+         - Stability review: race conditions, resource leaks, error cascades
+
+     ALL reviewers MUST:
        - Read the test results (TEST-RESULT file)
        - Reference plan docs (GAP-PLAN piece contract)
        - Reference research docs (RESEARCH-NNN.md integration map)
        - Analyze WHY tests failed (read error/failure logs, not just pass/fail)
        - Check if implementation addresses the ACTUAL problem/gap as planned
-       - Check coherence with core principles and project structure
+       - Check coherence with core principles and research understanding
+       - Check coherence with the project and other related projects
        - Check format/communication/protocol is standard, accurate, efficient
        - Label all findings with severity (Critical / Important / Suggestion / Nit)
      Input: WU piece contract + checkpoint + TEST-RESULT + plan/research refs
-     Output: REVIEW-NNN-WU-XX-iterN.md (approve | block with specific analysis)
+     Output: REVIEW-NNN-WU-XX-iterN.md (APPROVE or BLOCK -- nothing else)
 
-     After fix cycles: repeat BOTH `/codex:review` AND `/codex:adversarial-review`
-     recursively on every re-test/re-implement cycle. Never skip either.
+     CLEAN PASS RULE:
+       A review MUST NEVER pass with conditions, comments, findings,
+       or follow-up items. The only acceptable outcomes are:
+         - APPROVE: zero findings, zero comments, zero conditions
+         - BLOCK: at least one finding that requires changes
+
+       Any finding at any severity (Critical, Important, Suggestion, Nit)
+       results in a BLOCK. The ITR loop continues.
+
+       "Pass with suggestions" is NOT a valid outcome.
+       "Pass with follow-up" is NOT a valid outcome.
+       "Approve with minor comments" is NOT a valid outcome.
+
+       Only CLEAN PASS advances the WU.
+
+     After fix cycles: repeat ALL reviewer checks (including `/codex:review`
+     AND `/codex:adversarial-review`) recursively on every re-test/re-implement
+     cycle. Never skip any reviewer.
 
   4. STATUS REPORT to dispatcher (after every iteration regardless of outcome)
      Dispatcher logs to DISPATCH-TRACK-NNN.md:

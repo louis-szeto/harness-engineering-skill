@@ -96,6 +96,27 @@ For each change area, dispatch an outline agent:
 
 Outline agents run in parallel (max: CONFIG.yaml runtime.max_parallel_agents).
 
+### Examination subagents
+
+Each outline agent spawns examination subagents in parallel to compare
+research against actual code:
+
+  For each change area / gap candidate:
+    Spawn examination subagent:
+      SCOPE: <specific module/file range>
+      INPUT: Relevant RESEARCH-NNN.md sections (what was researched)
+             + actual code paths to read
+      TASK: "Read the actual code. Compare against the research context.
+             Identify gaps between the researched understanding and the
+             actual implementation. Report: what is missing, what is
+             done badly, what violates principles in the harness-engineer
+             skill or golden rules, what has bad integration between
+             subprojects and external services, what has safety/security
+             flaws, what has stability issues, what can be improved."
+
+  This nesting continues recursively for subprojects -- break down tasks
+  and subagents in nested layers within subprojects.
+
 ### Step 2 -- Outline + gap analysis process
 
 Each outline agent performs BOTH outline and gap analysis for its scope:
@@ -131,13 +152,39 @@ CATEGORY 5 -- Principle violations (check against references/harness-rules.md)
   Functions or modules with multiple responsibilities?
   Any security concern (references/security-performance.md)?
 
+CATEGORY 6 -- Stability issues
+  Are there race conditions, resource leaks, unbounded queues?
+  Are there failure modes that cascade without isolation?
+  Are there missing retries, circuit breakers, or graceful degradation?
+
+CATEGORY 7 -- Improvement opportunities
+  Are there components that could be simplified without changing behavior?
+  Are there repeated patterns that could be abstracted?
+  Are there performance bottlenecks that are low-risk to fix?
+
 **Outline process:**
 
-1. Identify all gaps in scope using the 5 categories above
+1. Identify all gaps in scope using the 7 categories above
 2. For each confirmed design direction, outline the specific changes needed
 3. Map changes to files, modules, and interfaces
 4. Define testing/validation strategy for each change group
 5. Identify dependencies between change groups
+
+**Wiki logging:**
+
+  IF storage_format == "obsidian":
+    Each outline agent spawns a vault subagent to save planned changes
+    as wiki pages in the Obsidian vault, linked to corresponding research pages.
+
+  IF storage_format == "markdown":
+    Write OUTLINE-NNN-<scope>.md to docs/status/ as usual.
+
+**Research is truth:**
+
+CRITICAL: Consider that the research is the correct version if there are
+conflicts between research documentation and the actual code. Research was
+verified against the codebase with human review. If code contradicts research,
+the code is the gap to be addressed.
 
 ### Step 3 -- Write GAPS-NNN.md
 
@@ -385,7 +432,7 @@ Timestamp: YYYY-MM-DD HH:MM
 ## Gaps
 
 GAP-01:
-  Category:  <standard-format | functional | integration | test | principle-violation>
+  Category:  <standard-format | functional | integration | test | principle-violation | stability | improvement>
   Location:  <module + file:line if specific>
   Finding:   <factual description of what is missing or wrong>
   Evidence:  <what in the codebase shows this -- specific reference>

@@ -8,15 +8,22 @@ base. Never plan. Never propose solutions. Never analyze gaps.
 
 ## SCOPE DISCIPLINE
 
-Research IS compression of information. Not bug hunting. Not planning. Not opinion.
-Not gap analysis.
+Research IS deep understanding of the codebase. Not bug hunting. Not planning.
+Not opinion. Not gap analysis.
 
 ### What Research IS
 - Finding truth: how does this system actually work?
+- Understanding what each project/subproject is responsible for
+- Understanding the workflow and purpose of each project/subproject and its components
+- What components each project/subproject should have
 - Mapping dependencies: what files depend on what?
+- How projects/modules integrate and communicate with each other
+- How projects/modules communicate with external services
 - Identifying interfaces: what are the contracts between modules?
 - Discovering state: what data flows through the system?
+- Cross-project data flows and API contracts
 - Cataloging constraints: what rules exist (written or implicit in code)?
+- Configuration, deployment, and environment dependencies
 - Recording the user's story: what is their vision and intent?
 
 ### What Research IS NOT
@@ -50,6 +57,26 @@ during the outline phase.
 
 ---
 
+## STEP 0: STORAGE FORMAT SELECTION
+
+Before spawning any Q-Agents, ask the user:
+
+  "How should research documentation be saved?"
+  Options:
+    A) Markdown files in docs/ folder (default)
+    B) Obsidian LLM wiki
+
+  IF user selects B (Obsidian):
+    Ask: "What is the vault location?" (absolute path)
+    Record: storage_format = "obsidian", vault_path = <path>
+    This setting is relayed to all R-Agents and the final organization subagent.
+
+  IF user selects A (default):
+    Record: storage_format = "markdown", vault_path = null
+    R-Agents write to docs/status/ as usual.
+
+---
+
 ## PHASE A: Q-AGENT QUESTIONING
 
 ### Step 1 -- File structure scan (orchestrator only)
@@ -80,6 +107,27 @@ For each module boundary, dispatch a Q-Agent with:
 
 Q-Agents run in parallel (max: CONFIG.yaml runtime.max_parallel_agents).
 If more modules than parallel slots: batch them.
+
+### Nested Breakdown
+
+The orchestrator reads the entire file structure and breaks it down into
+analysis pieces. For each top-level boundary:
+
+1. Spawn a Q-Agent for the boundary
+2. The Q-Agent reads its scope. If the scope is a large subproject:
+   - The Q-Agent further breaks it into sub-boundaries
+   - For each sub-boundary, spawn a nested Q-Agent (sub-subagent)
+   - Each nested Q-Agent analyzes its sub-boundary in detail
+   - The parent Q-Agent aggregates nested findings
+3. This nesting continues recursively until each piece is small enough
+   to analyze in one context window (40% rule)
+
+The same nesting applies to R-Agents -- one R-Agent per Q-Agent,
+with nested R-Agents for nested Q-Agents. Always maintain 1:1 pairing.
+
+ALWAYS break down into smaller pieces when structures are sophisticated
+(many references, too many lines of code, or context being too long).
+Use nested subagent layers within subprojects.
 
 ### Step 3 -- Q-Agent behavior
 
@@ -157,6 +205,27 @@ This produces the Integration Map section of RESEARCH-NNN.md.
 
 Orchestrator merges all R-RECORDs + Integration Map into RESEARCH-NNN.md.
 This is the complete knowledge base. It describes what IS, not what SHOULD BE.
+
+### Step 5 -- Storage output
+
+  IF storage_format == "obsidian":
+    For each R-RECORD, spawn a vault subagent:
+      Command: claude --continue (in vault_path working directory)
+      Input: The R-RECORD content formatted as wiki document
+      Task: "Save this research document as a properly linked wiki page
+             in the Obsidian vault. Use [[wikilinks]] for cross-references
+             to other modules, components, and integration points."
+
+    After all vault subagents complete, spawn a final vault organization subagent:
+      Command: claude --continue (in vault_path working directory)
+      Task: "Review all newly written wiki pages. Organize them into a
+             logical structure with proper [[wikilinks]], backlinks, and
+             tags. Ensure cross-module references are bidirectionally linked.
+             Create or update an index/MOC (Map of Content) page that
+             provides navigation for the entire research output."
+
+  IF storage_format == "markdown":
+    R-RECORDs are already written to docs/status/. No additional step needed.
 
 ---
 
