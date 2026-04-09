@@ -80,7 +80,7 @@ See: runtime/autonomy-rules.md, runtime/prioritization.md
 10. ACTIVE MONITORING — Every time you launch a new batch of subagents, track session IDs, expected output files, and remaining queue. If the platform provides a cron/scheduler, use it to detect dead agents. If no scheduler is available, check agent status before each dispatch step. Dead agents stall the pipeline — detect them early.
 11. MAX PARALLEL = 5 — Up to 5 Claude Code agents running simultaneously. If rate/API limit errors encountered, drop to 4, then 3, etc until no errors. Resume increasing after 5 clean minutes.
 12. TOKEN EXHAUSTION RECOVERY: If ALL active agents hit rate/API limits (429/500), tokens are exhausted. Wait for token refresh before retrying. If the platform provides a scheduler, set a recovery job to resume after refresh. If no scheduler is available, the human operator must manually restart the cycle.
-13. 10-MIN STUCK KILL — If any agent produces no output for >10 minutes, log the issue, kill it, and split the task into smaller subtasks before respawning.
+13. 10-MIN STUCK KILL — If any agent produces no output for >10 minutes, log the issue, kill it, and split the task into smaller subtasks before respawning. **MUST ALWAYS set a cron job when a subagent is given a command that will run for a while, to periodically check on its progress.**
 14. TRACKING EVERYWHERE — Every phase, cycle, and step writes to tracking logs. DISPATCH-TRACK, error log, compact summaries, progress logs. Recovery must be able to pick up from any interruption point.
 
 ---
